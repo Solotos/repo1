@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meine Filmsammlung</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>🎬 Meine Filmsammlung</h1>
+    <div class="search">
+      <input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off">
+    </div>
+    <button id="addBtn" class="primary">＋ Film per Foto</button>
+  </header>
+
+  <section class="cockpit" aria-label="Filter">
+    <nav id="letters" class="letters" aria-label="Anfangsbuchstabe"></nav>
+    <div class="controls">
+      <label>Sortierung
+        <select id="sort">
+          <option value="title">Titel A → Z</option>
+          <option value="title_desc">Titel Z → A</option>
+          <option value="year_desc">Datum ↓ neueste zuerst</option>
+          <option value="year_asc">Datum ↑ älteste zuerst</option>
+          <option value="added_desc">Zuletzt hinzugefügt</option>
+          <option value="added_asc">Zuerst hinzugefügt</option>
+        </select>
+      </label>
+      <label>Genre
+        <select id="genre"><option value="">Alle Genres</option></select>
+      </label>
+      <label>Jahr
+        <select id="year"><option value="">Alle Jahre</option></select>
+      </label>
+      <label>Format
+        <select id="format"><option value="">DVD &amp; Blu-ray</option></select>
+      </label>
+      <button id="reset" class="ghost">Filter zurücksetzen</button>
+    </div>
+    <p id="count" class="count"></p>
+  </section>
+
+  <main id="grid" class="grid"></main>
+  <p id="empty" class="empty" hidden></p>
+
+  <!-- Foto hochladen -->
+  <dialog id="addDialog">
+    <form method="dialog" class="dialog-head">
+      <h2>Film per Foto hinzufügen</h2>
+      <button class="icon" aria-label="Schließen">✕</button>
+    </form>
+    <label class="drop" id="drop">
+      <input id="photos" type="file" accept="image/*" multiple hidden>
+      <span class="drop-icon">📷</span>
+      <strong>Foto der Rückseite aufnehmen oder auswählen</strong>
+      <small>Mehrere Fotos auf einmal möglich – oder hierher ziehen</small>
+    </label>
+    <div class="row">
+      <label>Format
+        <select id="addFormat">
+          <option value="">automatisch erkennen</option>
+          <option>DVD</option><option>Blu-ray</option><option>4K UHD</option>
+        </select>
+      </label>
+      <label class="grow">Hinweis (optional)
+        <input id="hint" placeholder="z. B. Titel, falls das Foto schwer lesbar ist">
+      </label>
+    </div>
+    <button id="byTitle" class="ghost">Nur mit Titel-Hinweis suchen (ohne Foto)</button>
+    <ul id="queue" class="queue"></ul>
+  </dialog>
+
+  <!-- Details -->
+  <dialog id="detail" class="detail"></dialog>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
