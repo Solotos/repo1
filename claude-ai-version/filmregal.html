@@ -135,10 +135,14 @@ dialog::backdrop { background: rgb(8 12 18 / .6); }
 .dlg-body { padding: 14px 18px 20px; display: grid; gap: 14px; }
 
 .drop {
-  display: grid; justify-items: center; gap: 4px; padding: 22px 12px; text-align: center; cursor: pointer;
+  display: grid; justify-items: center; gap: 4px; padding: 18px 12px; text-align: center;
   border: 2px dashed var(--line); border-radius: 10px;
 }
 .drop.over { border-color: var(--accent); }
+.pick { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 8px; }
+.pick label { position: relative; cursor: pointer; }
+/* Unsichtbar, aber nicht display:none – sonst öffnet iOS die Kamera nicht zuverlässig */
+.vh { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 0; }
 .drop strong { font-weight: 600; }
 .drop span { color: var(--muted); font-size: .85rem; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -256,11 +260,11 @@ button.chip:hover { border-color: var(--accent); }
       <button role="tab" id="tabMulti" aria-selected="false" data-mode="multi">Viele Filme auf einem Foto</button>
     </div>
     <div id="modeMulti" hidden>
-      <label class="drop" id="dropMulti">
-        <input id="multiInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+      <div class="drop" id="dropMulti">
         <strong>📚 Regal oder Stapel fotografieren</strong>
-        <span>Hüllenrücken im Regal, ein Stapel oder mehrere Hüllen nebeneinander · auch mehrere Fotos</span>
-      </label>
+        <span>Hüllenrücken im Regal, ein Stapel oder mehrere Hüllen nebeneinander</span>
+        <div class="pick"><label class="btn primary">📷 Kamera<input id="multiCam" class="vh" type="file" accept="image/*" capture="environment"></label><label class="btn">🖼️ Aus Fotos wählen<input id="multiInput" class="vh" type="file" accept="image/*" multiple></label></div>
+      </div>
       <p class="hint">Am besten klappt es mit 10–15 Filmen pro Foto: nah genug, dass die Schrift auf den Rücken lesbar ist. Vor dem Speichern siehst du die Liste und hakst ab, was stimmt.</p>
       <div class="field"><span>Format aller Filme auf dem Foto</span>
         <select id="multiFormat"><option value="">automatisch erkennen</option><option>DVD</option><option>Blu-ray</option><option>4K UHD</option></select>
@@ -269,16 +273,16 @@ button.chip:hover { border-color: var(--accent); }
     </div>
     <div id="modeSingle">
     <div id="photoArea" class="pair">
-      <label class="drop" id="dropBack">
-        <input id="backInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
-        <strong>📷 Rückseite fotografieren</strong>
-        <span>Pflicht · mehrere Filme auf einmal möglich</span>
-      </label>
-      <label class="drop" id="dropFront">
-        <input id="frontInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
-        <strong>🖼️ Vorderseite (optional)</strong>
+      <div class="drop" id="dropBack">
+        <strong>Rückseite</strong>
+        <span>Pflicht · aus Fotos auch mehrere auf einmal</span>
+        <div class="pick"><label class="btn primary">📷 Kamera<input id="backCam" class="vh" type="file" accept="image/*" capture="environment"></label><label class="btn">🖼️ Aus Fotos wählen<input id="backInput" class="vh" type="file" accept="image/*" multiple></label></div>
+      </div>
+      <div class="drop" id="dropFront">
+        <strong>Vorderseite (optional)</strong>
         <span id="frontState">wird zum Cover des nächsten Films</span>
-      </label>
+        <div class="pick"><label class="btn primary">📷 Kamera<input id="frontCam" class="vh" type="file" accept="image/*" capture="environment"></label><label class="btn">🖼️ Aus Fotos wählen<input id="frontInput" class="vh" type="file" accept="image/*"></label></div>
+      </div>
     </div>
     <p id="noImages" class="notice warn" hidden>In dieser Ansicht kann Claude keine Fotos lesen. Gib stattdessen den Titel ein.</p>
     <div class="pair">
@@ -581,8 +585,8 @@ function takeBacks(files) {
   files.forEach((f, i) => enqueue({ back: f, front: i === 0 ? pendingFront : null, hint: files.length === 1 ? hint : "", format }));
   pendingFront = null; $("#frontState").textContent = "wird zum Cover des nächsten Films"; $("#hint").value = "";
 }
-$("#backInput").addEventListener("change", (e) => { takeBacks([...e.target.files]); e.target.value = ""; });
-$("#frontInput").addEventListener("change", (e) => {
+for (const id of ["#backInput", "#backCam"]) $(id).addEventListener("change", (e) => { takeBacks([...e.target.files]); e.target.value = ""; });
+for (const id of ["#frontInput", "#frontCam"]) $(id).addEventListener("change", (e) => {
   pendingFront = e.target.files[0] || null; e.target.value = "";
   $("#frontState").textContent = pendingFront ? "✓ Vorderseite bereit – jetzt die Rückseite" : "wird zum Cover des nächsten Films";
 });
@@ -644,7 +648,7 @@ function enqueueMulti(files) {
     multiChain = multiChain.then(() => runMulti(file, box, format)).catch(() => {});
   }
 }
-$("#multiInput").addEventListener("change", (e) => { enqueueMulti([...e.target.files]); e.target.value = ""; });
+for (const id of ["#multiInput", "#multiCam"]) $(id).addEventListener("change", (e) => { enqueueMulti([...e.target.files]); e.target.value = ""; });
 {
   const el = $("#dropMulti");
   el.addEventListener("dragover", (e) => { e.preventDefault(); el.classList.add("over"); });
@@ -832,12 +836,13 @@ function showEdit(m) {
 function showCover(m) {
   $("#extra").innerHTML = `
     <div class="form">
-      <label class="drop"><input id="coverInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
-        <strong>🖼️ Foto der Vorderseite wählen</strong><span>wird als Cover angezeigt</span></label>
+      <div class="drop"><strong>Foto der Vorderseite</strong><span>wird als Cover angezeigt</span>
+        <div class="pick"><label class="btn primary">📷 Kamera<input id="coverCam" class="vh" type="file" accept="image/*" capture="environment"></label>
+        <label class="btn">🖼️ Aus Fotos wählen<input id="coverInput" class="vh" type="file" accept="image/*"></label></div></div>
       ${m.cover ? `<button class="btn" id="coverRemove">Cover entfernen (gezeichnetes Plakat anzeigen)</button>` : ""}
       <span id="coverMsg" class="hint"></span>
     </div>`;
-  $("#coverInput").onchange = async (e) => {
+  $("#coverCam").onchange = $("#coverInput").onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     $("#coverMsg").textContent = "Wird hochgeladen …";
     const id = await storeImage(await shrink(file, 1000));
