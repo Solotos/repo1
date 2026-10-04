@@ -149,6 +149,20 @@ dialog::backdrop { background: rgb(8 12 18 / .6); }
 .or { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
 .or .field { flex: 1 1 220px; }
 
+.modes { display: flex; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 10px; }
+.modes button { flex: 1; border: 0; border-radius: 7px; padding: 8px 10px; background: none; font-weight: 500; color: var(--muted); }
+.modes button[aria-selected=true] { background: var(--surface); color: var(--fg); box-shadow: var(--shadow); }
+#modeMulti, #modeSingle { display: grid; gap: 14px; }
+.review { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.review-head { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--surface-2); }
+.review-head img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; }
+.review-list { list-style: none; margin: 0; padding: 0; }
+.review-list li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--line); }
+.review-list input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); }
+.review-list .rt { font-weight: 600; min-width: 0; }
+.review-list .rs { color: var(--muted); font-size: .82rem; }
+.review-list .badge { font-size: .72rem; padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.review-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); }
 .queue { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .queue li { display: flex; gap: 10px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 8px; }
 .queue .thumb { width: 44px; height: 44px; border-radius: 4px; object-fit: cover; flex: none; background: var(--surface-2); display: grid; place-items: center; }
@@ -186,7 +200,7 @@ button.chip:hover { border-color: var(--accent); }
   <div class="wrap">
     <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD</small></h1>
     <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
-    <button id="addBtn" class="btn primary">＋ Film per Foto</button>
+    <button id="addBtn" class="btn primary">＋ Filme per Foto</button>
   </div>
 </header>
 
@@ -224,9 +238,10 @@ button.chip:hover { border-color: var(--accent); }
   <div id="empty" class="empty" hidden>
     <h2>Dein Regal ist noch leer</h2>
     <ol>
-      <li>Tippe auf <strong>＋ Film per Foto</strong>.</li>
+      <li>Tippe auf <strong>＋ Filme per Foto</strong>.</li>
       <li>Fotografiere die <strong>Rückseite</strong> der DVD oder Blu-ray. Mit einem zweiten Foto der <strong>Vorderseite</strong> bekommt der Film sein Cover.</li>
       <li>Claude liest das Cover, erkennt den Film und trägt Titel, Jahr, Schauspieler, Genre und Inhalt ein.</li>
+      <li>Viele Filme auf einmal: Wähle <strong>„Viele Filme auf einem Foto“</strong> und fotografiere ein ganzes Regalbrett oder einen Stapel.</li>
     </ol>
     <p class="hint">So sieht das Regal danach aus (Beispiele, nicht gespeichert):</p>
   </div>
@@ -234,8 +249,25 @@ button.chip:hover { border-color: var(--accent); }
 </main>
 
 <dialog id="addDlg" aria-labelledby="addTitle">
-  <div class="dlg-head"><h2 id="addTitle">Film hinzufügen</h2><button class="icon-btn" data-close aria-label="Schließen">✕</button></div>
+  <div class="dlg-head"><h2 id="addTitle">Filme hinzufügen</h2><button class="icon-btn" data-close aria-label="Schließen">✕</button></div>
   <div class="dlg-body">
+    <div class="modes" role="tablist" aria-label="Wie möchtest du Filme hinzufügen?">
+      <button role="tab" id="tabSingle" aria-selected="true" data-mode="single">Eine Hülle pro Foto</button>
+      <button role="tab" id="tabMulti" aria-selected="false" data-mode="multi">Viele Filme auf einem Foto</button>
+    </div>
+    <div id="modeMulti" hidden>
+      <label class="drop" id="dropMulti">
+        <input id="multiInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+        <strong>📚 Regal oder Stapel fotografieren</strong>
+        <span>Hüllenrücken im Regal, ein Stapel oder mehrere Hüllen nebeneinander · auch mehrere Fotos</span>
+      </label>
+      <p class="hint">Am besten klappt es mit 10–15 Filmen pro Foto: nah genug, dass die Schrift auf den Rücken lesbar ist. Vor dem Speichern siehst du die Liste und hakst ab, was stimmt.</p>
+      <div class="field"><span>Format aller Filme auf dem Foto</span>
+        <select id="multiFormat"><option value="">automatisch erkennen</option><option>DVD</option><option>Blu-ray</option><option>4K UHD</option></select>
+      </div>
+      <div id="review"></div>
+    </div>
+    <div id="modeSingle">
     <div id="photoArea" class="pair">
       <label class="drop" id="dropBack">
         <input id="backInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
@@ -263,6 +295,7 @@ button.chip:hover { border-color: var(--accent); }
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
     <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf.</p>
+    </div>
     <ul id="queue" class="queue"></ul>
   </div>
 </dialog>
@@ -572,6 +605,118 @@ $("#byTitle").addEventListener("click", () => {
 function applyImageSupport() {
   $("#photoArea").hidden = !canImages;
   $("#noImages").hidden = canImages;
+  document.querySelector(".modes").hidden = !canImages;
+  if (!canImages) setMode("single");
+}
+
+// ---------- Viele Filme auf einem Foto ----------
+function setMode(mode) {
+  $("#tabSingle").setAttribute("aria-selected", String(mode === "single"));
+  $("#tabMulti").setAttribute("aria-selected", String(mode === "multi"));
+  $("#modeSingle").hidden = mode !== "single";
+  $("#modeMulti").hidden = mode !== "multi";
+  try { localStorage.setItem("filmregal-mode", mode); } catch {}
+}
+document.querySelector(".modes").addEventListener("click", (e) => { const b = e.target.closest("[data-mode]"); if (b) setMode(b.dataset.mode); });
+
+function multiPrompt() {
+  return [
+    "Du katalogisierst eine private DVD- und Blu-ray-Sammlung.",
+    "Auf dem Foto sind MEHRERE Filmhüllen zu sehen: zum Beispiel Hüllenrücken in einem Regal, ein Stapel oder nebeneinander liegende Cover.",
+    "Erkenne JEDEN einzelnen Film, in Lesereihenfolge (links nach rechts, oben nach unten). Zähle keinen Film doppelt und lass keinen aus.",
+    "Kannst du einen Titel nicht sicher lesen, nimm ihn trotzdem auf: confidence \"niedrig\" und in hinweis, was du lesen konntest.",
+    "Das Format erkennst du an Farbe und Logo: Blu-ray hat einen blauen Rand bzw. das Blu-ray-Logo, 4K UHD ist schwarz mit 4K-Ultra-HD-Logo, DVD meist schwarz oder transparent mit DVD-Logo. Unsicher: leer lassen.",
+    "Ergänze die Metadaten aus deinem Wissen, erfinde nichts.",
+    `Genres nur aus dieser Liste: ${GENRES.join(", ")}.`,
+    "Antworte nur mit JSON in genau dieser Form (overview höchstens 1 Satz, höchstens 4 Darsteller):",
+    '{"filme": [{"title": "", "original_title": "", "year": 1999, "genres": [""], "actors": [""], "directors": [""], "runtime": 120, "overview": "", "media_format": "DVD | Blu-ray | 4K UHD | leer", "studio": "", "fsk": "FSK 12 oder leer", "confidence": "hoch | mittel | niedrig", "hinweis": ""}]}',
+    "Unbekannte Texte sind \"\", unbekannte Zahlen null, unbekannte Listen [].",
+  ].join("\n");
+}
+
+let multiChain = Promise.resolve(), reviewSeq = 0;
+function enqueueMulti(files) {
+  for (const file of files) {
+    const box = document.createElement("div");
+    box.className = "review";
+    $("#review").prepend(box);
+    const format = $("#multiFormat").value;
+    multiChain = multiChain.then(() => runMulti(file, box, format)).catch(() => {});
+  }
+}
+$("#multiInput").addEventListener("change", (e) => { enqueueMulti([...e.target.files]); e.target.value = ""; });
+{
+  const el = $("#dropMulti");
+  el.addEventListener("dragover", (e) => { e.preventDefault(); el.classList.add("over"); });
+  el.addEventListener("dragleave", () => el.classList.remove("over"));
+  el.addEventListener("drop", (e) => {
+    e.preventDefault(); el.classList.remove("over");
+    const fs = [...e.dataTransfer.files].filter((f) => f.type.startsWith("image/"));
+    if (fs.length) enqueueMulti(fs);
+  });
+}
+
+async function runMulti(file, box, format) {
+  const thumb = URL.createObjectURL(file);
+  const head = (inner) => `<div class="review-head"><img src="${thumb}" alt="Dein Foto">${inner}</div>`;
+  box.innerHTML = head(`<span class="spin"></span><span style="flex:1">Wartet …</span>`);
+  try {
+    const small = await shrink(file, 2000);
+    box.innerHTML = head(`<span class="spin"></span><span style="flex:1">Claude sucht alle Filme auf dem Foto … Das kann eine Minute dauern.</span>`);
+    const raw = await sample.json(multiPrompt(), { modelTier: "default", images: [small] });
+    const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.filme) ? raw.filme : [];
+    const seen = new Set();
+    const items = arr.map((r) => normalize(r, format)).filter((m) => {
+      const key = fold(m.title) + "|" + (m.year || "");
+      if (!m.title || seen.has(key)) return false;
+      seen.add(key); return true;
+    });
+    if (!items.length) {
+      box.innerHTML = head(`<span class="err" style="flex:1">✕ Auf diesem Foto wurde kein Film erkannt. Geh näher heran, damit die Schrift lesbar ist.</span>`);
+      return;
+    }
+    renderReview(box, items, small, head);
+  } catch (e) {
+    box.innerHTML = head(`<span class="err" style="flex:1">✕ ${esc(errText(e))}</span>`);
+  }
+}
+
+function renderReview(box, items, photoBlob, head) {
+  const seq = ++reviewSeq;
+  for (const m of items) m._dup = !!findDuplicate(m);
+  box.innerHTML = head(`<span style="flex:1"><strong>${items.length} ${items.length === 1 ? "Film" : "Filme"} erkannt</strong><br><span class="hint">Entferne den Haken bei allem, was nicht stimmt.</span></span>`) +
+    `<ul class="review-list">${items.map((m, i) => {
+      const badge = m._dup ? `<span class="badge warn">schon im Regal</span>`
+        : m.confidence === "niedrig" ? `<span class="badge warn" title="${esc(m.hinweis)}">unsicher</span>` : "";
+      const sub = [m.year, m.media_format, list(m.genres).slice(0, 2).join(", ")].filter(Boolean).join(" · ");
+      return `<li><input type="checkbox" id="rv${seq}-${i}" data-i="${i}" ${m._dup || m.confidence === "niedrig" ? "" : "checked"}>
+        <label for="rv${seq}-${i}"><div class="rt">${esc(m.title)}</div><div class="rs">${esc([sub, m.confidence === "niedrig" ? m.hinweis : ""].filter(Boolean).join(" · "))}</div></label>${badge}</li>`;
+    }).join("")}</ul>
+    <div class="review-foot"><button class="btn primary" data-save></button><button class="btn" data-discard>Verwerfen</button><span class="hint" data-msg></span></div>`;
+  const saveBtn = box.querySelector("[data-save]");
+  const checked = () => [...box.querySelectorAll("input[type=checkbox]:checked")].map((c) => items[+c.dataset.i]);
+  const updateBtn = () => { const n = checked().length; saveBtn.textContent = `${n} ${n === 1 ? "Film" : "Filme"} speichern`; saveBtn.disabled = !n; };
+  box.querySelector(".review-list").addEventListener("change", updateBtn);
+  updateBtn();
+  box.querySelector("[data-discard]").onclick = () => box.remove();
+  saveBtn.onclick = async () => {
+    const chosen = checked();
+    saveBtn.disabled = true;
+    box.querySelector("[data-discard]").hidden = true;
+    for (const c of box.querySelectorAll("input[type=checkbox]")) c.disabled = true;
+    const msg = box.querySelector("[data-msg]");
+    msg.textContent = "Wird gespeichert …";
+    const photoId = await storeImage(photoBlob);
+    let saved = 0;
+    try {
+      for (const m of chosen) { await saveMovie(m, photoId, ""); saved++; msg.textContent = `${saved} von ${chosen.length} gespeichert …`; }
+      msg.className = "ok"; msg.textContent = `✓ ${saved} ${saved === 1 ? "Film" : "Filme"} gespeichert`;
+      saveBtn.hidden = true;
+    } catch (e) {
+      msg.className = "err";
+      msg.textContent = e?.code === "quota_exceeded" ? `✕ Speicher voll nach ${saved} Filmen.` : `✕ Fehler nach ${saved} von ${chosen.length} Filmen. Bitte die übrigen noch einmal versuchen.`;
+    }
+  };
 }
 
 // ---------- Details, Bearbeiten, Löschen ----------
@@ -637,7 +782,10 @@ function onDetailClick(e, m) {
 async function deleteMovie(m) {
   try {
     await db.doc("movies/" + m.id).delete();
-    for (const id of [m.photo, m.cover]) if (id) assets.delete(id).catch(() => {});
+    // Ein Regalfoto gehört zu mehreren Filmen: nur löschen, wenn kein anderer Film es noch nutzt
+    for (const id of [m.photo, m.cover]) {
+      if (id && !movies.some((x) => x.id !== m.id && (x.photo === id || x.cover === id))) assets.delete(id).catch(() => {});
+    }
     $("#detailDlg").close();
   } catch { $("#extra").innerHTML = `<p class="notice warn">Löschen fehlgeschlagen. Bitte noch einmal versuchen.</p>`; }
 }
@@ -749,6 +897,7 @@ render();
     canImages = !!caps?.images;
   }
   applyImageSupport();
+  try { if (canImages && localStorage.getItem("filmregal-mode") === "multi") setMode("multi"); } catch {}
   db.collection("movies").onSnapshot((snap) => {
     movies = snap.docs.map((d) => {
       const m = { id: d.id, ...d.data() };
