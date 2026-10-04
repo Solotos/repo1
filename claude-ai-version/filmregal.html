@@ -284,7 +284,7 @@ button.chip:hover { border-color: var(--accent); }
         <div class="pick"><label class="btn primary">📷 Kamera<input id="frontCam" class="vh" type="file" accept="image/*" capture="environment"></label><label class="btn">🖼️ Aus Fotos wählen<input id="frontInput" class="vh" type="file" accept="image/*"></label></div>
       </div>
     </div>
-    <p id="noImages" class="notice warn" hidden>In dieser Ansicht kann Claude keine Fotos lesen. Gib stattdessen den Titel ein.</p>
+    <p id="noImages" class="notice warn" hidden>claude.ai hat gemeldet, dass Claude in dieser Ansicht keine Fotos lesen darf. Öffne die Seite in Safari bzw. in der Claude-App, oder gib den Titel ein.</p>
     <div class="pair">
       <label class="field"><span>Format</span>
         <select id="addFormat">
@@ -298,7 +298,7 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf.</p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 4</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
@@ -319,7 +319,8 @@ const GENRES = ["Action", "Abenteuer", "Animation", "Biografie", "Dokumentation"
 const ARTICLES = ["der ", "die ", "das ", "the ", "a ", "an ", "ein ", "eine ", "le ", "la ", "les "];
 const F = { q: "", letter: "", sort: "title", genre: "", year: "", format: "" };
 let movies = [], loaded = false;
-let db = null, sample = null, assets = null, downloads = null, canImages = false;
+// Foto-Knöpfe sind immer sichtbar; nur ein echter Fehler beim Lesen blendet den Hinweis ein.
+let db = null, sample = null, assets = null, downloads = null, imagesBlocked = false;
 
 const EXAMPLES = [
   { title: "Der Pate", year: 1972, media_format: "Blu-ray", fsk: "FSK 16" },
@@ -548,7 +549,7 @@ async function runJob(job, li) {
     }
     await persist(job, li);
   } catch (e) {
-    if (e?.code === "images_unavailable") { canImages = false; applyImageSupport(); }
+    if (e?.code === "images_unavailable") { imagesBlocked = true; applyImageSupport(); }
     done("err", "✕ " + esc(errText(e)));
   }
 }
@@ -603,14 +604,11 @@ for (const [zone, handler] of [["#dropBack", (fs) => takeBacks(fs)], ["#dropFron
 $("#byTitle").addEventListener("click", () => {
   const hint = $("#hint").value.trim();
   if (!hint) { $("#hint").focus(); $("#hint").placeholder = "Bitte zuerst einen Titel eingeben"; return; }
-  enqueue({ back: null, front: canImages ? pendingFront : null, hint, format: $("#addFormat").value });
+  enqueue({ back: null, front: pendingFront, hint, format: $("#addFormat").value });
   pendingFront = null; $("#hint").value = "";
 });
 function applyImageSupport() {
-  $("#photoArea").hidden = !canImages;
-  $("#noImages").hidden = canImages;
-  document.querySelector(".modes").hidden = !canImages;
-  if (!canImages) setMode("single");
+  $("#noImages").hidden = !imagesBlocked;
 }
 
 // ---------- Viele Filme auf einem Foto ----------
@@ -681,6 +679,7 @@ async function runMulti(file, box, format) {
     }
     renderReview(box, items, small, head);
   } catch (e) {
+    if (e?.code === "images_unavailable") { imagesBlocked = true; applyImageSupport(); }
     box.innerHTML = head(`<span class="err" style="flex:1">✕ ${esc(errText(e))}</span>`);
   }
 }
@@ -897,12 +896,8 @@ render();
     return;
   }
   if (!assets || !sample) $("#addBtn").hidden = true;   // nur Besitzer:innen fügen Filme hinzu
-  if (sample) {
-    const caps = await sample.limits().catch(() => null);
-    canImages = !!caps?.images;
-  }
   applyImageSupport();
-  try { if (canImages && localStorage.getItem("filmregal-mode") === "multi") setMode("multi"); } catch {}
+  try { if (localStorage.getItem("filmregal-mode") === "multi") setMode("multi"); } catch {}
   db.collection("movies").onSnapshot((snap) => {
     movies = snap.docs.map((d) => {
       const m = { id: d.id, ...d.data() };
