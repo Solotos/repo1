@@ -1,0 +1,766 @@
+<title>Mein Filmregal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: Regal-Raster aus Hüllen (2:3), darüber ein schmales Filtercockpit; Details im Dialog. */
+:root {
+  --bg: #eceff3;
+  --surface: #ffffff;
+  --surface-2: #dfe4ea;
+  --fg: #131a24;
+  --muted: #5a6573;
+  --line: #c9d0d9;
+  --accent: #1d5fd1;        /* Blu-ray-Blau */
+  --accent-fg: #ffffff;
+  --ok: #17803d;
+  --warn: #a35a00;
+  --err: #b4232a;
+  --shadow: 0 1px 2px rgb(19 26 36 / .12), 0 6px 18px rgb(19 26 36 / .10);
+  --font-display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10141b; --surface: #181e27; --surface-2: #222a35; --fg: #e7ebf1; --muted: #98a3b3;
+    --line: #2f3946; --accent: #5b93ff; --accent-fg: #0b1220; --ok: #4ccf7c; --warn: #f0b04a; --err: #ff7b7b;
+    --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 22px rgb(0 0 0 / .35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10141b; --surface: #181e27; --surface-2: #222a35; --fg: #e7ebf1; --muted: #98a3b3;
+  --line: #2f3946; --accent: #5b93ff; --accent-fg: #0b1220; --ok: #4ccf7c; --warn: #f0b04a; --err: #ff7b7b;
+  --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 22px rgb(0 0 0 / .35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--font-body); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.wrap { padding-inline: 16px; max-width: 1400px; margin-inline: auto; }
+
+header.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.top .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-block: 12px; }
+.brand { font: 800 1.7rem/1 var(--font-display); letter-spacing: .02em; text-transform: uppercase; margin: 0; }
+.brand small { display: block; font: 500 .72rem/1.2 var(--font-body); letter-spacing: .08em; color: var(--muted); }
+.search { flex: 1 1 240px; min-width: 0; }
+input[type=search], .field input, .field select, .field textarea, .cockpit select {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg);
+}
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 14px; font-weight: 500; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+.btn.danger { color: var(--err); border-color: var(--err); }
+.btn[disabled] { opacity: .5; cursor: default; }
+.icon-btn { border: 0; background: none; font-size: 1.3rem; line-height: 1; padding: 6px 8px; color: var(--muted); }
+
+.cockpit { background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.cockpit .wrap { display: grid; gap: 10px; padding-block: 12px; }
+.letters { display: flex; flex-wrap: wrap; gap: 4px; }
+.letters button {
+  min-width: 30px; padding: 3px 6px; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--surface); font: 600 1rem/1.3 var(--font-display); letter-spacing: .03em;
+}
+.letters button[disabled] { opacity: .3; cursor: default; }
+.letters button[aria-pressed=true] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.controls label { display: grid; gap: 2px; flex: 1 1 160px; min-width: 0; font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.controls select { text-transform: none; letter-spacing: 0; font-size: .95rem; color: var(--fg); background: var(--surface); }
+.meta-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; color: var(--muted); font-size: .85rem; }
+.meta-row .tools { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.notice { margin: 12px 0 0; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-size: .9rem; }
+.notice.warn { border-color: var(--warn); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 22px 18px; padding-block: 20px 40px; }
+.card { display: grid; gap: 8px; align-content: start; text-align: left; background: none; border: 0; padding: 0; }
+.card .t { font-weight: 600; line-height: 1.25; }
+.card .y { color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
+.card:hover .case { transform: translateY(-3px); }
+.card.example { opacity: .75; cursor: default; }
+.card.example:hover .case { transform: none; }
+
+/* Die Hülle: oben das Formatband wie bei echten Blu-ray-/DVD-Cases */
+.case {
+  position: relative; display: flex; flex-direction: column; aspect-ratio: 2 / 3; max-width: 100%;
+  border-radius: 6px; overflow: hidden; background: #1a1f27; box-shadow: var(--shadow);
+  transition: transform .15s ease;
+}
+.band {
+  flex: none; padding: 3px 8px; font: 800 .78rem/1.3 var(--font-display); letter-spacing: .14em;
+  text-transform: uppercase; color: #fff; background: #111;
+}
+.fmt-bluray .band { background: #0a4fbd; }
+.fmt-uhd .band { background: #050505; }
+.fmt-uhd .band b { color: #f5c400; font-weight: 800; }
+.art { position: relative; flex: 1; min-height: 0; container-type: inline-size; }
+.art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.poster-gen {
+  height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; padding: 12px;
+  color: #fff; overflow: hidden;
+}
+.poster-gen .pt { font: 800 clamp(.8rem, 13cqi, 1.9rem)/.95 var(--font-display); text-transform: uppercase; letter-spacing: .01em; overflow-wrap: break-word; hyphens: auto; text-wrap: balance; }
+.poster-gen .py { font: 600 .85rem/1 var(--font-display); letter-spacing: .2em; opacity: .8; }
+.fsk {
+  position: absolute; right: 6px; top: 6px; width: 26px; height: 26px; border-radius: 4px;
+  display: grid; place-items: center; font: 800 .8rem/1 var(--font-display); box-shadow: 0 1px 3px rgb(0 0 0 / .4);
+}
+.fsk-0 { background: #fff; color: #000; } .fsk-6 { background: #ffd400; color: #000; }
+.fsk-12 { background: #00a651; color: #fff; } .fsk-16 { background: #0071bc; color: #fff; }
+.fsk-18 { background: #e30613; color: #fff; }
+.tag-example {
+  position: absolute; left: 6px; top: 6px; padding: 1px 6px; border-radius: 4px; font-size: .7rem; font-weight: 600;
+  background: rgb(255 255 255 / .9); color: #111;
+}
+
+.empty { display: grid; gap: 14px; padding-block: 24px 8px; max-width: 62ch; }
+.empty h2 { font: 800 1.6rem/1.1 var(--font-display); text-transform: uppercase; margin: 0; }
+.empty ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+
+dialog {
+  width: min(760px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); padding: 0;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--fg);
+}
+dialog::backdrop { background: rgb(8 12 18 / .6); }
+.dlg-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px 0; }
+.dlg-head h2 { margin: 0; font: 800 1.4rem/1.1 var(--font-display); text-transform: uppercase; letter-spacing: .02em; }
+.dlg-body { padding: 14px 18px 20px; display: grid; gap: 14px; }
+
+.drop {
+  display: grid; justify-items: center; gap: 4px; padding: 22px 12px; text-align: center; cursor: pointer;
+  border: 2px dashed var(--line); border-radius: 10px;
+}
+.drop.over { border-color: var(--accent); }
+.drop strong { font-weight: 600; }
+.drop span { color: var(--muted); font-size: .85rem; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: grid; gap: 3px; min-width: 0; }
+.field > span { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.field textarea { min-height: 90px; resize: vertical; }
+.hint { color: var(--muted); font-size: .85rem; margin: 0; }
+.or { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+.or .field { flex: 1 1 220px; }
+
+.queue { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.queue li { display: flex; gap: 10px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 8px; }
+.queue .thumb { width: 44px; height: 44px; border-radius: 4px; object-fit: cover; flex: none; background: var(--surface-2); display: grid; place-items: center; }
+.queue .msg { flex: 1; min-width: 0; font-size: .9rem; }
+.queue .msg .actions { margin-top: 6px; }
+.ok { color: var(--ok); } .warn { color: var(--warn); } .err { color: var(--err); }
+.spin { width: 16px; height: 16px; flex: none; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.detail { display: grid; grid-template-columns: 210px 1fr; gap: 20px; }
+.detail .sub { color: var(--muted); margin: 2px 0 10px; font-variant-numeric: tabular-nums; }
+.detail h3 { margin: 0; font: 800 2rem/1 var(--font-display); text-transform: uppercase; text-wrap: balance; }
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 10px 0 0; }
+dl.facts dt { color: var(--muted); }
+dl.facts dd { margin: 0; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 1px 10px; font-size: .82rem; }
+button.chip:hover { border-color: var(--accent); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.photo-full { width: 100%; border-radius: 8px; }
+.form { display: grid; gap: 10px; }
+
+@media (max-width: 600px) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 16px 12px; }
+  .detail { grid-template-columns: 1fr; }
+  .detail .case { width: 60%; margin-inline: auto; }
+  .pair { grid-template-columns: 1fr; }
+  .brand { font-size: 1.4rem; }
+  .band { font-size: .62rem; letter-spacing: .1em; }
+}
+@media (prefers-reduced-motion: reduce) { .case { transition: none; } .spin { animation-duration: 2.5s; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD</small></h1>
+    <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
+    <button id="addBtn" class="btn primary">＋ Film per Foto</button>
+  </div>
+</header>
+
+<section class="cockpit" aria-label="Filtercockpit">
+  <div class="wrap">
+    <nav id="letters" class="letters" aria-label="Anfangsbuchstabe"></nav>
+    <div class="controls">
+      <label>Sortierung
+        <select id="sort">
+          <option value="title">Titel A → Z</option>
+          <option value="title_desc">Titel Z → A</option>
+          <option value="year_desc">Datum absteigend (neueste zuerst)</option>
+          <option value="year_asc">Datum aufsteigend (älteste zuerst)</option>
+          <option value="added_desc">Zuletzt hinzugefügt</option>
+          <option value="added_asc">Zuerst hinzugefügt</option>
+        </select>
+      </label>
+      <label>Genre <select id="genre"></select></label>
+      <label>Jahr <select id="year"></select></label>
+      <label>Format <select id="format"></select></label>
+      <button id="reset" class="btn">Filter zurücksetzen</button>
+    </div>
+    <div class="meta-row">
+      <span id="count">Sammlung wird geladen …</span>
+      <span class="tools">
+        <button id="exportCsv" class="btn" hidden>Als Excel-Liste (CSV) sichern</button>
+        <button id="exportJson" class="btn" hidden>Komplett-Backup (JSON)</button>
+      </span>
+    </div>
+  </div>
+</section>
+
+<main class="wrap">
+  <div id="banner"></div>
+  <div id="empty" class="empty" hidden>
+    <h2>Dein Regal ist noch leer</h2>
+    <ol>
+      <li>Tippe auf <strong>＋ Film per Foto</strong>.</li>
+      <li>Fotografiere die <strong>Rückseite</strong> der DVD oder Blu-ray. Mit einem zweiten Foto der <strong>Vorderseite</strong> bekommt der Film sein Cover.</li>
+      <li>Claude liest das Cover, erkennt den Film und trägt Titel, Jahr, Schauspieler, Genre und Inhalt ein.</li>
+    </ol>
+    <p class="hint">So sieht das Regal danach aus (Beispiele, nicht gespeichert):</p>
+  </div>
+  <div id="grid" class="grid"></div>
+</main>
+
+<dialog id="addDlg" aria-labelledby="addTitle">
+  <div class="dlg-head"><h2 id="addTitle">Film hinzufügen</h2><button class="icon-btn" data-close aria-label="Schließen">✕</button></div>
+  <div class="dlg-body">
+    <div id="photoArea" class="pair">
+      <label class="drop" id="dropBack">
+        <input id="backInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+        <strong>📷 Rückseite fotografieren</strong>
+        <span>Pflicht · mehrere Filme auf einmal möglich</span>
+      </label>
+      <label class="drop" id="dropFront">
+        <input id="frontInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+        <strong>🖼️ Vorderseite (optional)</strong>
+        <span id="frontState">wird zum Cover des nächsten Films</span>
+      </label>
+    </div>
+    <p id="noImages" class="notice warn" hidden>In dieser Ansicht kann Claude keine Fotos lesen. Gib stattdessen den Titel ein.</p>
+    <div class="pair">
+      <label class="field"><span>Format</span>
+        <select id="addFormat">
+          <option value="">automatisch erkennen</option><option>DVD</option><option>Blu-ray</option><option>4K UHD</option>
+        </select>
+      </label>
+      <label class="field"><span>Hinweis (optional)</span>
+        <input id="hint" placeholder="z. B. Titel, falls das Foto unscharf ist">
+      </label>
+    </div>
+    <div class="or">
+      <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
+    </div>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf.</p>
+    <ul id="queue" class="queue"></ul>
+  </div>
+</dialog>
+
+<dialog id="detailDlg" aria-label="Filmdetails">
+  <div class="dlg-head"><span></span><button class="icon-btn" data-close aria-label="Schließen">✕</button></div>
+  <div class="dlg-body" id="detailBody"></div>
+</dialog>
+
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+const GENRES = ["Action", "Abenteuer", "Animation", "Biografie", "Dokumentation", "Drama", "Familie", "Fantasy",
+  "Historienfilm", "Horror", "Komödie", "Krimi", "Kriegsfilm", "Liebesfilm", "Musik", "Mystery",
+  "Science-Fiction", "Thriller", "Western", "Serie"];
+const ARTICLES = ["der ", "die ", "das ", "the ", "a ", "an ", "ein ", "eine ", "le ", "la ", "les "];
+const F = { q: "", letter: "", sort: "title", genre: "", year: "", format: "" };
+let movies = [], loaded = false;
+let db = null, sample = null, assets = null, downloads = null, canImages = false;
+
+const EXAMPLES = [
+  { title: "Der Pate", year: 1972, media_format: "Blu-ray", fsk: "FSK 16" },
+  { title: "Amélie", year: 2001, media_format: "DVD", fsk: "FSK 6" },
+  { title: "Alien", year: 1979, media_format: "4K UHD", fsk: "FSK 16" },
+];
+
+// ---------- Hilfsfunktionen ----------
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fold = (s) => String(s ?? "").normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
+function sortTitle(t) {
+  const f = fold(t).trim();
+  for (const a of ARTICLES) if (f.startsWith(a) && f.length > a.length) return f.slice(a.length).trimStart();
+  return f;
+}
+function letterOf(t) { const c = sortTitle(t).charAt(0).toUpperCase(); return c >= "A" && c <= "Z" ? c : "#"; }
+function hue(s) { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; }
+const list = (v) => Array.isArray(v) ? v.map((x) => String(x).trim()).filter(Boolean) : [];
+const intOrNull = (v) => { const n = parseInt(v, 10); return Number.isFinite(n) && n > 0 ? n : null; };
+const blobUrl = (id) => id ? "/_blob/" + id : "";
+
+function caseHtml(m, opts = {}) {
+  const fmt = m.media_format;
+  const cls = fmt === "Blu-ray" ? "fmt-bluray" : fmt === "4K UHD" ? "fmt-uhd" : fmt === "DVD" ? "fmt-dvd" : "";
+  const band = fmt === "Blu-ray" ? "Blu-ray Disc" : fmt === "4K UHD" ? "<b>4K</b> Ultra HD" : fmt === "DVD" ? "DVD Video" : "";
+  const h = hue(m.title || "");
+  const art = m.cover
+    ? `<img src="${blobUrl(m.cover)}" alt="Cover: ${esc(m.title)}" loading="lazy">`
+    : `<div class="poster-gen" style="background:linear-gradient(165deg,hsl(${h} 42% 34%),hsl(${(h + 50) % 360} 48% 12%))">
+         <span class="pt" lang="de">${esc(m.title)}</span><span class="py">${esc(m.year || "")}</span></div>`;
+  const fskNum = String(m.fsk || "").match(/\d+/)?.[0];
+  const fsk = fskNum && ["0", "6", "12", "16", "18"].includes(fskNum) ? `<span class="fsk fsk-${fskNum}" title="FSK ${fskNum}">${fskNum}</span>` : "";
+  return `<div class="case ${cls}">${band ? `<div class="band">${band}</div>` : ""}<div class="art">${art}${fsk}${opts.example ? '<span class="tag-example">Beispiel</span>' : ""}</div></div>`;
+}
+
+// ---------- Filtern & Darstellen ----------
+const SORTS = {
+  title: [(m) => m._st, 1], title_desc: [(m) => m._st, -1],
+  year_desc: [(m) => m.year || 0, -1], year_asc: [(m) => m.year || 9999, 1],
+  added_desc: [(m) => m.created_at || "", -1], added_asc: [(m) => m.created_at || "", 1],
+};
+function filtered() {
+  let out = movies;
+  if (F.q) {
+    const terms = fold(F.q).split(/\s+/).filter(Boolean);
+    out = out.filter((m) => {
+      const hay = fold([m.title, m.original_title, m.overview, m.studio, m.year, ...list(m.actors), ...list(m.directors), ...list(m.genres)].join(" "));
+      return terms.every((t) => hay.includes(t));
+    });
+  }
+  if (F.letter) out = out.filter((m) => m._letter === F.letter);
+  if (F.genre) out = out.filter((m) => list(m.genres).includes(F.genre));
+  if (F.year) out = out.filter((m) => String(m.year || "") === F.year);
+  if (F.format) out = out.filter((m) => m.media_format === F.format);
+  const [key, dir] = SORTS[F.sort] || SORTS.title;
+  return [...out].sort((a, b) => {
+    const ka = key(a), kb = key(b);
+    if (ka < kb) return -dir; if (ka > kb) return dir;
+    return a._st < b._st ? -1 : a._st > b._st ? 1 : 0;
+  });
+}
+
+function fillSelect(sel, values, allLabel, cur) {
+  if (cur && !values.map(String).includes(cur)) values = [cur, ...values];
+  sel.innerHTML = `<option value="">${allLabel}</option>` + values.map((v) => `<option ${String(v) === cur ? "selected" : ""}>${esc(v)}</option>`).join("");
+}
+
+function render() {
+  const letters = new Set(movies.map((m) => m._letter));
+  $("#letters").innerHTML = `<button data-l="" aria-pressed="${!F.letter}">Alle</button>` +
+    LETTERS.map((l) => `<button data-l="${l}" aria-pressed="${F.letter === l}" ${letters.has(l) || F.letter === l ? "" : "disabled"}>${l}</button>`).join("");
+  const genres = [...new Set(movies.flatMap((m) => list(m.genres)))].sort((a, b) => fold(a).localeCompare(fold(b)));
+  const years = [...new Set(movies.map((m) => m.year).filter(Boolean))].sort((a, b) => b - a);
+  const formats = ["DVD", "Blu-ray", "4K UHD"].filter((f) => movies.some((m) => m.media_format === f));
+  fillSelect($("#genre"), genres, "Alle Genres", F.genre);
+  fillSelect($("#year"), years, "Alle Jahre", F.year);
+  fillSelect($("#format"), formats, "Alle Formate", F.format);
+  $("#sort").value = F.sort;
+
+  const shown = filtered();
+  const active = F.q || F.letter || F.genre || F.year || F.format;
+  $("#count").textContent = !loaded ? "Sammlung wird geladen …"
+    : active ? `${shown.length} von ${movies.length} Filmen` : `${movies.length} ${movies.length === 1 ? "Film" : "Filme"} im Regal`;
+  $("#exportCsv").hidden = $("#exportJson").hidden = !(downloads && movies.length);
+
+  const isEmpty = loaded && movies.length === 0;
+  $("#empty").hidden = !isEmpty;
+  if (isEmpty) {
+    $("#grid").innerHTML = EXAMPLES.map((m) => `<div class="card example">${caseHtml(m, { example: true })}<span class="t">${esc(m.title)}</span><span class="y">${m.year} · ${m.media_format}</span></div>`).join("");
+    return;
+  }
+  $("#grid").innerHTML = shown.length ? shown.map((m) => `
+    <button class="card" data-id="${esc(m.id)}">
+      ${caseHtml(m)}
+      <span class="t">${esc(m.title)}</span>
+      <span class="y">${esc(m.year || "")}${list(m.genres).length ? " · " + esc(list(m.genres).slice(0, 2).join(", ")) : ""}</span>
+    </button>`).join("")
+    : loaded ? `<p class="hint">Keine Filme passen zu diesen Filtern.</p>` : "";
+}
+
+function setFilter(patch) {
+  Object.assign(F, patch);
+  try { localStorage.setItem("filmregal-filter", JSON.stringify(F)); } catch {}
+  render();
+}
+let qTimer;
+$("#q").addEventListener("input", (e) => { clearTimeout(qTimer); qTimer = setTimeout(() => setFilter({ q: e.target.value.trim() }), 150); });
+$("#letters").addEventListener("click", (e) => { const b = e.target.closest("button[data-l]"); if (b && !b.disabled) setFilter({ letter: b.dataset.l }); });
+for (const k of ["sort", "genre", "year", "format"]) $("#" + k).addEventListener("change", (e) => setFilter({ [k]: e.target.value }));
+$("#reset").addEventListener("click", () => { $("#q").value = ""; setFilter({ q: "", letter: "", sort: "title", genre: "", year: "", format: "" }); });
+$("#grid").addEventListener("click", (e) => { const c = e.target.closest(".card[data-id]"); if (c) openDetail(c.dataset.id); });
+for (const d of document.querySelectorAll("dialog")) d.addEventListener("click", (e) => { if (e.target.closest("[data-close]")) d.close(); });
+
+function banner(text, cls = "") { $("#banner").innerHTML = text ? `<p class="notice ${cls}">${text}</p>` : ""; }
+
+// ---------- Bilder ----------
+async function shrink(file, maxSide) {
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const s = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.86));
+    return blob || file;
+  } catch { return file; }
+}
+async function storeImage(blob) {
+  if (!assets || !blob) return "";
+  try { return (await assets.upload(blob, { type: blob.type || "image/jpeg" })).id; }
+  catch (e) { console.warn("Bild nicht gespeichert", e); return ""; }
+}
+
+// ---------- Erkennung mit Claude ----------
+function prompt(hint, hasPhoto, hasFront) {
+  return [
+    "Du katalogisierst eine private DVD- und Blu-ray-Sammlung.",
+    hasPhoto ? `Bild 1 ist ein Foto der Rückseite einer Filmhülle${hasFront ? ", Bild 2 die Vorderseite" : ""}. Lies den Text auf dem Cover (Titel, Darsteller, Studio, FSK-Logo, Laufzeit, Format-Logos wie DVD / Blu-ray / 4K Ultra HD) und bestimme den Film.`
+      : "Bestimme den Film anhand des Hinweises.",
+    hint ? `Hinweis des Sammlers: ${hint}` : "",
+    "Ergänze die Metadaten aus deinem Wissen. Erfinde nichts: Wenn du den Film nicht sicher bestimmen kannst, setze confidence auf \"niedrig\" und erkläre in hinweis kurz, was fehlt.",
+    `Genres nur aus dieser Liste: ${GENRES.join(", ")}.`,
+    "Antworte nur mit einem JSON-Objekt in genau dieser Form:",
+    '{"title": "deutscher Titel wie auf der Hülle", "original_title": "", "year": 1999, "genres": ["Action"], "actors": ["max. 8 Hauptdarsteller"], "directors": [""], "runtime": 120, "overview": "2-3 Sätze Inhalt auf Deutsch, ohne Spoiler", "media_format": "DVD | Blu-ray | 4K UHD | leer", "studio": "", "fsk": "FSK 12 oder leer", "confidence": "hoch | mittel | niedrig", "hinweis": ""}',
+    "Unbekannte Texte sind \"\", unbekannte Zahlen null, unbekannte Listen [].",
+  ].filter(Boolean).join("\n");
+}
+
+const ERRORS = {
+  not_granted: "Du hast der Seite nicht erlaubt, Claude zu benutzen. Lade die Seite neu, dann wirst du erneut gefragt.",
+  sampling_disabled: "Claude ist für dein Konto in dieser Ansicht nicht verfügbar.",
+  rate_limited: "Dein Claude-Nutzungslimit ist gerade erreicht. Versuch es später noch einmal.",
+  session_expired: "Du bist abgemeldet. Melde dich bei claude.ai neu an und lade die Seite neu.",
+  image_rejected: "Das Foto konnte nicht gelesen werden. Versuch ein anderes Foto (JPG oder PNG).",
+  images_unavailable: "In dieser Ansicht kann Claude keine Fotos lesen. Gib den Titel als Hinweis ein.",
+  refused: "Claude hat dieses Foto nicht bearbeitet. Versuch es mit einem anderen Foto oder dem Titel.",
+  invalid_json: "Claude hat unverständlich geantwortet. Bitte noch einmal versuchen.",
+  empty_completion: "Claude hat nichts erkannt. Versuch ein schärferes Foto oder gib den Titel ein.",
+};
+const errText = (e) => ERRORS[e?.code] || "Die Erkennung ist fehlgeschlagen. Bitte noch einmal versuchen.";
+
+function normalize(r, fallbackFormat) {
+  const fmt = ["DVD", "Blu-ray", "4K UHD"].includes(r?.media_format) ? r.media_format : "";
+  return {
+    title: String(r?.title || "").trim(),
+    original_title: String(r?.original_title || "").trim(),
+    year: intOrNull(r?.year),
+    genres: list(r?.genres).filter((g) => GENRES.includes(g)),
+    actors: list(r?.actors).slice(0, 10),
+    directors: list(r?.directors),
+    runtime: intOrNull(r?.runtime),
+    overview: String(r?.overview || "").trim(),
+    media_format: fallbackFormat || fmt,
+    studio: String(r?.studio || "").trim(),
+    fsk: /^FSK (0|6|12|16|18)$/.test(String(r?.fsk || "").trim()) ? String(r.fsk).trim() : "",
+    confidence: ["hoch", "mittel", "niedrig"].includes(r?.confidence) ? r.confidence : "mittel",
+    hinweis: String(r?.hinweis || "").trim(),
+  };
+}
+
+function findDuplicate(m) {
+  return movies.find((x) => fold(x.title) === fold(m.title) && (x.year || null) === (m.year || null) && (x.media_format || "") === (m.media_format || ""));
+}
+
+async function saveMovie(m, photoId, coverId) {
+  const { confidence, hinweis, ...data } = m;
+  const ref = await db.collection("movies").add({ ...data, photo: photoId, cover: coverId, notes: "", created_at: new Date().toISOString() });
+  return ref.id;
+}
+
+// Warteschlange: Fotos nacheinander verarbeiten
+let chain = Promise.resolve();
+let pendingFront = null;
+
+function enqueue(job) {
+  const li = document.createElement("li");
+  li.innerHTML = `<span class="thumb">${job.back ? "" : "🔎"}</span><div class="msg">Wartet …</div><span class="spin"></span>`;
+  if (job.back) { const img = document.createElement("img"); img.className = "thumb"; img.alt = ""; img.src = URL.createObjectURL(job.back); li.firstChild.replaceWith(img); }
+  $("#queue").prepend(li);
+  chain = chain.then(() => runJob(job, li)).catch(() => {});
+}
+
+async function runJob(job, li) {
+  const msg = li.querySelector(".msg");
+  const done = (cls, html) => { li.querySelector(".spin")?.remove(); msg.className = "msg " + cls; msg.innerHTML = html; };
+  msg.textContent = "Claude liest das Cover und erkennt den Film …";
+  try {
+    const back = job.back ? (job.backSmall = await shrink(job.back, 1600)) : null;
+    const front = job.front ? (job.frontSmall = await shrink(job.front, 1000)) : null;
+    const images = [back, front].filter(Boolean);
+    const raw = await sample.json(prompt(job.hint, !!back, !!front), {
+      modelTier: "default", ...(images.length ? { images } : {}), ...(job.retry ? { cache: false } : {}),
+    });
+    const m = normalize(raw, job.format);
+    if (!m.title) return done("err", "✕ Kein Film erkannt. Versuch ein schärferes Foto oder gib den Titel ein.");
+    job.result = m;
+    const dup = findDuplicate(m);
+    if (dup && !job.allowDuplicate) {
+      done("warn", `„${esc(m.title)}“ (${esc(m.year || "?")}) steht schon im Regal.<div class="actions"><button class="btn" data-dup>Trotzdem speichern</button> <button class="btn" data-open="${esc(dup.id)}">Vorhandenen ansehen</button></div>`);
+      msg.querySelector("[data-dup]").onclick = () => {
+        li.innerHTML = `<span class="thumb">⏳</span><div class="msg">Wird gespeichert …</div><span class="spin"></span>`;
+        chain = chain.then(() => persist(job, li));
+      };
+      bindOpen(msg);
+      return;
+    }
+    await persist(job, li);
+  } catch (e) {
+    if (e?.code === "images_unavailable") { canImages = false; applyImageSupport(); }
+    done("err", "✕ " + esc(errText(e)));
+  }
+}
+
+async function persist(job, li) {
+  const msg = li.querySelector(".msg");
+  const done = (cls, html) => { li.querySelector(".spin")?.remove(); msg.className = "msg " + cls; msg.innerHTML = html; };
+  try {
+    const [photoId, coverId] = await Promise.all([
+      job.backSmall ? storeImage(job.backSmall) : "",
+      job.frontSmall ? storeImage(job.frontSmall) : "",
+    ]);
+    const m = job.result;
+    const id = await saveMovie(m, photoId, coverId);
+    const unsure = m.confidence === "niedrig";
+    done(unsure ? "warn" : "ok",
+      `${unsure ? "⚠️ Unsicher erkannt" : "✓ Gespeichert"}: <strong>${esc(m.title)}</strong> (${esc(m.year || "?")})` +
+      (unsure && m.hinweis ? `<br><small>${esc(m.hinweis)}</small>` : "") +
+      `<div class="actions"><button class="btn" data-open="${esc(id)}">${unsure ? "Prüfen & korrigieren" : "Ansehen"}</button></div>`);
+    bindOpen(msg);
+  } catch (e) {
+    done("err", e?.code === "quota_exceeded" ? "✕ Der Speicher ist voll. Lösche Filme, die du nicht mehr brauchst." : "✕ Speichern fehlgeschlagen. Bitte noch einmal versuchen.");
+  }
+}
+
+function bindOpen(el) {
+  for (const b of el.querySelectorAll("[data-open]")) b.onclick = () => { $("#addDlg").close(); openDetail(b.dataset.open); };
+}
+
+// Upload-Dialog
+$("#addBtn").addEventListener("click", () => $("#addDlg").showModal());
+function takeBacks(files) {
+  const hint = $("#hint").value.trim(), format = $("#addFormat").value;
+  files.forEach((f, i) => enqueue({ back: f, front: i === 0 ? pendingFront : null, hint: files.length === 1 ? hint : "", format }));
+  pendingFront = null; $("#frontState").textContent = "wird zum Cover des nächsten Films"; $("#hint").value = "";
+}
+$("#backInput").addEventListener("change", (e) => { takeBacks([...e.target.files]); e.target.value = ""; });
+$("#frontInput").addEventListener("change", (e) => {
+  pendingFront = e.target.files[0] || null; e.target.value = "";
+  $("#frontState").textContent = pendingFront ? "✓ Vorderseite bereit – jetzt die Rückseite" : "wird zum Cover des nächsten Films";
+});
+for (const [zone, handler] of [["#dropBack", (fs) => takeBacks(fs)], ["#dropFront", (fs) => { pendingFront = fs[0]; $("#frontState").textContent = "✓ Vorderseite bereit – jetzt die Rückseite"; }]]) {
+  const el = $(zone);
+  el.addEventListener("dragover", (e) => { e.preventDefault(); el.classList.add("over"); });
+  el.addEventListener("dragleave", () => el.classList.remove("over"));
+  el.addEventListener("drop", (e) => {
+    e.preventDefault(); el.classList.remove("over");
+    const fs = [...e.dataTransfer.files].filter((f) => f.type.startsWith("image/"));
+    if (fs.length) handler(fs);
+  });
+}
+$("#byTitle").addEventListener("click", () => {
+  const hint = $("#hint").value.trim();
+  if (!hint) { $("#hint").focus(); $("#hint").placeholder = "Bitte zuerst einen Titel eingeben"; return; }
+  enqueue({ back: null, front: canImages ? pendingFront : null, hint, format: $("#addFormat").value });
+  pendingFront = null; $("#hint").value = "";
+});
+function applyImageSupport() {
+  $("#photoArea").hidden = !canImages;
+  $("#noImages").hidden = canImages;
+}
+
+// ---------- Details, Bearbeiten, Löschen ----------
+let currentId = null;
+function openDetail(id) {
+  const m = movies.find((x) => x.id === id);
+  if (!m) return;
+  currentId = id;
+  const chips = (arr, key) => arr.length ? `<div class="chips">${arr.map((v) => key
+    ? `<button class="chip" data-f="${key}" data-v="${esc(v)}">${esc(v)}</button>` : `<span class="chip">${esc(v)}</span>`).join("")}</div>` : "";
+  const row = (k, v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : "";
+  const editable = !!assets;
+  $("#detailBody").innerHTML = `
+    <div class="detail">
+      <div>${caseHtml(m)}</div>
+      <div>
+        <h3>${esc(m.title)}</h3>
+        <p class="sub">${[m.original_title && fold(m.original_title) !== fold(m.title) ? esc(m.original_title) : "", m.year, m.runtime ? m.runtime + " Min." : "", esc(m.fsk)].filter(Boolean).join(" · ")}</p>
+        ${m.overview ? `<p>${esc(m.overview)}</p>` : ""}
+        <dl class="facts">
+          ${row("Genre", chips(list(m.genres), "genre"))}
+          ${row("Regie", chips(list(m.directors), "q"))}
+          ${row("Darsteller", chips(list(m.actors), "q"))}
+          ${row("Format", esc(m.media_format))}
+          ${row("Studio", esc(m.studio))}
+          ${row("Notizen", esc(m.notes))}
+        </dl>
+      </div>
+    </div>
+    ${editable ? `<div class="actions">
+      <button class="btn" data-act="edit">✏️ Bearbeiten</button>
+      <button class="btn" data-act="cover">🖼️ Cover ändern</button>
+      ${m.photo ? `<button class="btn" data-act="photo">📷 Foto der Rückseite</button>` : ""}
+      <button class="btn danger" data-act="delete">🗑️ Löschen</button>
+    </div>` : ""}
+    <div id="extra"></div>`;
+  $("#detailBody").onclick = (e) => onDetailClick(e, m);
+  const dlg = $("#detailDlg");
+  if (!dlg.open) dlg.showModal();
+}
+
+function onDetailClick(e, m) {
+  const chip = e.target.closest("[data-f]");
+  if (chip) {
+    if (chip.dataset.f === "genre") setFilter({ genre: chip.dataset.v });
+    else { $("#q").value = chip.dataset.v; setFilter({ q: chip.dataset.v }); }
+    $("#detailDlg").close();
+    return;
+  }
+  const act = e.target.closest("[data-act]")?.dataset.act;
+  const extra = $("#extra");
+  if (act === "photo") extra.innerHTML = `<img class="photo-full" src="${blobUrl(m.photo)}" alt="Foto der Rückseite">`;
+  if (act === "delete") {
+    extra.innerHTML = `<p class="notice warn">„${esc(m.title)}“ und die Fotos dazu endgültig löschen?</p>
+      <div class="actions"><button class="btn danger" data-act="delete-yes">Ja, löschen</button><button class="btn" data-act="cancel">Abbrechen</button></div>`;
+  }
+  if (act === "cancel") extra.innerHTML = "";
+  if (act === "delete-yes") deleteMovie(m);
+  if (act === "edit") showEdit(m);
+  if (act === "cover") showCover(m);
+}
+
+async function deleteMovie(m) {
+  try {
+    await db.doc("movies/" + m.id).delete();
+    for (const id of [m.photo, m.cover]) if (id) assets.delete(id).catch(() => {});
+    $("#detailDlg").close();
+  } catch { $("#extra").innerHTML = `<p class="notice warn">Löschen fehlgeschlagen. Bitte noch einmal versuchen.</p>`; }
+}
+
+function showEdit(m) {
+  const f = (key, label, val = m[key]) => `<label class="field"><span>${label}</span><input name="${key}" id="ed-${key}" value="${esc(val ?? "")}"></label>`;
+  $("#extra").innerHTML = `
+    <form class="form" id="editForm">
+      <div class="pair">${f("title", "Titel")}${f("original_title", "Originaltitel")}</div>
+      <div class="pair">${f("year", "Jahr")}${f("runtime", "Laufzeit (Min.)")}</div>
+      <div class="pair">
+        <label class="field"><span>Format</span><select name="media_format" id="ed-format">
+          ${["", "DVD", "Blu-ray", "4K UHD"].map((v) => `<option value="${v}" ${v === (m.media_format || "") ? "selected" : ""}>${v || "–"}</option>`).join("")}
+        </select></label>
+        <label class="field"><span>FSK</span><select name="fsk" id="ed-fsk">
+          ${["", "FSK 0", "FSK 6", "FSK 12", "FSK 16", "FSK 18"].map((v) => `<option value="${v}" ${v === (m.fsk || "") ? "selected" : ""}>${v || "–"}</option>`).join("")}
+        </select></label>
+      </div>
+      ${f("genres", "Genres (mit Komma getrennt)", list(m.genres).join(", "))}
+      ${f("actors", "Darsteller (mit Komma getrennt)", list(m.actors).join(", "))}
+      ${f("directors", "Regie (mit Komma getrennt)", list(m.directors).join(", "))}
+      ${f("studio", "Studio")}
+      <label class="field"><span>Inhalt</span><textarea name="overview" id="ed-overview">${esc(m.overview)}</textarea></label>
+      ${f("notes", "Notizen (z. B. verliehen an …)")}
+      <div class="actions"><button class="btn primary">Speichern</button><span id="editMsg" class="hint"></span></div>
+    </form>`;
+  $("#editForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(e.target));
+    if (!d.title.trim()) { $("#editMsg").textContent = "Der Titel darf nicht leer sein."; return; }
+    const split = (s) => s.split(",").map((x) => x.trim()).filter(Boolean);
+    const patch = {
+      title: d.title.trim(), original_title: d.original_title.trim(), year: intOrNull(d.year), runtime: intOrNull(d.runtime),
+      media_format: d.media_format, fsk: d.fsk, genres: split(d.genres), actors: split(d.actors), directors: split(d.directors),
+      studio: d.studio.trim(), overview: d.overview.trim(), notes: d.notes.trim(),
+    };
+    try {
+      await db.doc("movies/" + m.id).update(patch);
+      openDetail(m.id);
+    } catch { $("#editMsg").textContent = "Speichern fehlgeschlagen. Bitte noch einmal versuchen."; }
+  };
+}
+
+function showCover(m) {
+  $("#extra").innerHTML = `
+    <div class="form">
+      <label class="drop"><input id="coverInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+        <strong>🖼️ Foto der Vorderseite wählen</strong><span>wird als Cover angezeigt</span></label>
+      ${m.cover ? `<button class="btn" id="coverRemove">Cover entfernen (gezeichnetes Plakat anzeigen)</button>` : ""}
+      <span id="coverMsg" class="hint"></span>
+    </div>`;
+  $("#coverInput").onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    $("#coverMsg").textContent = "Wird hochgeladen …";
+    const id = await storeImage(await shrink(file, 1000));
+    if (!id) { $("#coverMsg").textContent = "Hochladen fehlgeschlagen. Bitte noch einmal versuchen."; return; }
+    const old = m.cover;
+    await db.doc("movies/" + m.id).update({ cover: id });
+    if (old) assets.delete(old).catch(() => {});
+    openDetail(m.id);
+  };
+  $("#coverRemove")?.addEventListener("click", async () => {
+    const old = m.cover;
+    await db.doc("movies/" + m.id).update({ cover: "" });
+    if (old) assets.delete(old).catch(() => {});
+    openDetail(m.id);
+  });
+}
+
+// ---------- Export ----------
+async function offer(filename, data) {
+  try { await downloads.save({ filename, data }); }
+  catch (e) { if (e?.code !== "declined") banner("Die Datei konnte nicht gespeichert werden.", "warn"); }
+}
+$("#exportCsv").addEventListener("click", () => {
+  const cols = [["Titel", "title"], ["Originaltitel", "original_title"], ["Jahr", "year"], ["Format", "media_format"], ["Genres", "genres"],
+    ["Darsteller", "actors"], ["Regie", "directors"], ["Laufzeit (Min.)", "runtime"], ["FSK", "fsk"], ["Studio", "studio"], ["Notizen", "notes"], ["Inhalt", "overview"]];
+  const cell = (v) => { const s = Array.isArray(v) ? v.join(", ") : String(v ?? ""); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const rows = [...movies].sort((a, b) => a._st.localeCompare(b._st)).map((m) => cols.map(([, k]) => cell(m[k])).join(";"));
+  offer("filmsammlung.csv", "﻿" + [cols.map((c) => c[0]).join(";"), ...rows].join("\r\n"));
+});
+$("#exportJson").addEventListener("click", () => {
+  const clean = movies.map(({ _st, _letter, ...m }) => m);
+  offer("filmsammlung-backup.json", JSON.stringify({ exportiert: new Date().toISOString(), filme: clean }, null, 2));
+});
+
+// ---------- Start ----------
+try { Object.assign(F, JSON.parse(localStorage.getItem("filmregal-filter") || "{}")); } catch {}
+$("#q").value = F.q || "";
+render();
+
+(async () => {
+  if (!window.claude?.use) {
+    loaded = true; render();
+    banner("Diese Seite funktioniert nur, wenn sie auf claude.ai geöffnet wird.", "warn");
+    $("#addBtn").disabled = true;
+    return;
+  }
+  [db, sample, assets, downloads] = await Promise.all(["db", "sample", "assets", "downloads"].map((n) => window.claude.use(n).catch(() => null)));
+  if (!db) {
+    loaded = true; render();
+    banner("Die Sammlung ist nur sichtbar, wenn du bei claude.ai angemeldet bist.", "warn");
+    $("#addBtn").disabled = true;
+    return;
+  }
+  if (!assets || !sample) $("#addBtn").hidden = true;   // nur Besitzer:innen fügen Filme hinzu
+  if (sample) {
+    const caps = await sample.limits().catch(() => null);
+    canImages = !!caps?.images;
+  }
+  applyImageSupport();
+  db.collection("movies").onSnapshot((snap) => {
+    movies = snap.docs.map((d) => {
+      const m = { id: d.id, ...d.data() };
+      m._st = sortTitle(m.title); m._letter = letterOf(m.title);
+      return m;
+    });
+    loaded = true;
+    render();
+    // Offene Detailansicht aktualisieren, solange dort kein Formular offen ist
+    if ($("#detailDlg").open && currentId && !$("#extra")?.innerHTML) {
+      if (movies.some((x) => x.id === currentId)) openDetail(currentId); else $("#detailDlg").close();
+    }
+  }, () => banner("Die Sammlung konnte nicht geladen werden. Lade die Seite neu.", "warn"));
+})();
+</script>
