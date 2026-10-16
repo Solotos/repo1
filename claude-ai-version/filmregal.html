@@ -70,6 +70,23 @@ input[type=search], .field input, .field select, .field textarea, .cockpit selec
 .cockpit { background: var(--surface-2); border-bottom: 1px solid var(--line); }
 .cockpit .wrap { display: grid; gap: 10px; padding-block: 8px; }
 .cockpit-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .85rem; }
+.cats { display: flex; gap: 4px; padding: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+.cats button { flex: 1 1 0; min-width: 0; border: 0; background: none; border-radius: 7px; padding: 6px 4px; font-weight: 600; font-size: .9rem; color: var(--muted); white-space: nowrap; }
+.cats button[aria-pressed=true] { background: var(--accent); color: var(--accent-fg); }
+.cats .n { font-weight: 500; opacity: .8; font-size: .85em; font-variant-numeric: tabular-nums; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 10px; }
+.tile { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.tile b { display: block; font: 800 1.9rem/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.tile span { color: var(--muted); font-size: .8rem; }
+.stat-sec h3 { margin: 6px 0 8px; font: 800 1.15rem/1 var(--font-display); text-transform: uppercase; letter-spacing: .03em; }
+.bars { display: grid; grid-template-columns: max-content 1fr; gap: 5px 10px; align-items: center; }
+.bars .lab { font-size: .88rem; white-space: nowrap; }
+.bars button.lab { border: 0; background: none; padding: 0; text-align: left; color: var(--fg); text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
+.bars .track { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bars .bar { height: .8rem; min-width: 3px; background: var(--accent); border-radius: 0 4px 4px 0; }
+.bars .val { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; }
+@media (max-width: 600px) { .stat-grid { grid-template-columns: 1fr; } }
 .btn.small { padding: 4px 10px; font-size: .8rem; border-radius: 7px; }
 .filter-panel { display: grid; gap: 10px; padding-bottom: 6px; }
 #filterToggle .chev { display: inline-block; }
@@ -229,6 +246,7 @@ button.chip:hover { border-color: var(--accent); }
 
 <section class="cockpit" aria-label="Filtercockpit">
   <div class="wrap">
+    <nav id="cats" class="cats" aria-label="Bereich"></nav>
     <div class="cockpit-bar">
       <button id="filterToggle" class="btn small" aria-expanded="false" aria-controls="filterPanel">☰ Filter &amp; Sortierung <span id="filterBadge" class="badge-count" hidden></span> <span class="chev" aria-hidden="true">▾</span></button>
       <span id="count">Sammlung wird geladen …</span>
@@ -255,6 +273,7 @@ button.chip:hover { border-color: var(--accent); }
         <span class="zoom" role="group" aria-label="Schriftgröße"><button class="btn small" data-zoom="1">A</button><button class="btn small" data-zoom="1.15" style="font-size:.95rem">A</button><button class="btn small" data-zoom="1.3" style="font-size:1.1rem">A</button></span>
         <button id="exportCsv" class="btn small" hidden>⤓ Excel-Liste</button>
         <button id="exportJson" class="btn small" hidden>⤓ Backup</button>
+        <button id="statsBtn" class="btn small">📊 Statistik</button>
       </div>
     </div>
   </div>
@@ -321,10 +340,15 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 6</span></p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 7</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
+</dialog>
+
+<dialog id="statsDlg" aria-labelledby="statsTitle">
+  <div class="dlg-head"><h2 id="statsTitle">Statistik</h2><button class="icon-btn" data-close aria-label="Schließen">✕</button></div>
+  <div class="dlg-body" id="statsBody"></div>
 </dialog>
 
 <dialog id="detailDlg" aria-label="Filmdetails">
@@ -340,7 +364,7 @@ const GENRES = ["Action", "Abenteuer", "Animation", "Biografie", "Dokumentation"
   "Historienfilm", "Horror", "Komödie", "Krimi", "Kriegsfilm", "Liebesfilm", "Musik", "Mystery",
   "Science-Fiction", "Thriller", "Western", "Serie"];
 const ARTICLES = ["der ", "die ", "das ", "the ", "a ", "an ", "ein ", "eine ", "le ", "la ", "les "];
-const F = { q: "", letter: "", sort: "title", genre: "", year: "", format: "" };
+const F = { q: "", letter: "", sort: "title", genre: "", year: "", format: "", cat: "" };
 let movies = [], loaded = false;
 // Foto-Knöpfe sind immer sichtbar; nur ein echter Fehler beim Lesen blendet den Hinweis ein.
 let db = null, sample = null, assets = null, downloads = null, imagesBlocked = false;
@@ -379,6 +403,22 @@ function caseHtml(m, opts = {}) {
   return `<div class="case ${cls}">${band ? `<div class="band">${band}</div>` : ""}<div class="art">${art}${fsk}${opts.example ? '<span class="tag-example">Beispiel</span>' : ""}</div></div>`;
 }
 
+// ---------- Bereiche: Filme / Serien / Musik ----------
+// Ein gespeichertes Feld "category" hat Vorrang, sonst wird der Bereich aus den Genres abgeleitet.
+const CATS = [["", "Alle"], ["film", "Filme"], ["serie", "Serien"], ["musik", "Musik"]];
+function categoryOf(m) {
+  if (["film", "serie", "musik"].includes(m.category)) return m.category;
+  const g = list(m.genres);
+  if (g.includes("Konzert") || (g.includes("Musik") && (g.includes("Dokumentation") || g.length === 1))) return "musik";
+  if (g.includes("Serie")) return "serie";
+  return "film";
+}
+const inCat = () => F.cat ? movies.filter((m) => m._cat === F.cat) : movies;
+$("#cats").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-cat]");
+  if (b) setFilter({ cat: b.dataset.cat, letter: "", genre: "", year: "", format: "" });
+});
+
 // ---------- Filtern & Darstellen ----------
 const SORTS = {
   title: [(m) => m._st, 1], title_desc: [(m) => m._st, -1],
@@ -386,7 +426,7 @@ const SORTS = {
   added_desc: [(m) => m.created_at || "", -1], added_asc: [(m) => m.created_at || "", 1],
 };
 function filtered() {
-  let out = movies;
+  let out = inCat();
   if (F.q) {
     const terms = fold(F.q).split(/\s+/).filter(Boolean);
     out = out.filter((m) => {
@@ -412,12 +452,17 @@ function fillSelect(sel, values, allLabel, cur) {
 }
 
 function render() {
-  const letters = new Set(movies.map((m) => m._letter));
+  const counts = Object.fromEntries(CATS.map(([k]) => [k, k ? movies.filter((m) => m._cat === k).length : movies.length]));
+  $("#cats").innerHTML = CATS.filter(([k]) => !k || counts[k]).map(([k, label]) =>
+    `<button data-cat="${k}" aria-pressed="${(F.cat || "") === k}">${label} <span class="n">${counts[k]}</span></button>`).join("");
+  $("#cats").hidden = !loaded || !movies.length;
+  const pool = inCat();
+  const letters = new Set(pool.map((m) => m._letter));
   $("#letters").innerHTML = `<button data-l="" aria-pressed="${!F.letter}">Alle</button>` +
     LETTERS.map((l) => `<button data-l="${l}" aria-pressed="${F.letter === l}" ${letters.has(l) || F.letter === l ? "" : "disabled"}>${l}</button>`).join("");
-  const genres = [...new Set(movies.flatMap((m) => list(m.genres)))].sort((a, b) => fold(a).localeCompare(fold(b)));
-  const years = [...new Set(movies.map((m) => m.year).filter(Boolean))].sort((a, b) => b - a);
-  const formats = ["DVD", "Blu-ray", "4K UHD"].filter((f) => movies.some((m) => m.media_format === f));
+  const genres = [...new Set(pool.flatMap((m) => list(m.genres)))].sort((a, b) => fold(a).localeCompare(fold(b)));
+  const years = [...new Set(pool.map((m) => m.year).filter(Boolean))].sort((a, b) => b - a);
+  const formats = ["DVD", "Blu-ray", "4K UHD"].filter((f) => pool.some((m) => m.media_format === f));
   fillSelect($("#genre"), genres, "Alle Genres", F.genre);
   fillSelect($("#year"), years, "Alle Jahre", F.year);
   fillSelect($("#format"), formats, "Alle Formate", F.format);
@@ -429,7 +474,7 @@ function render() {
   $("#filterBadge").hidden = !nFilters;
   $("#filterBadge").textContent = nFilters;
   $("#count").textContent = !loaded ? "Sammlung wird geladen …"
-    : active ? `${shown.length} von ${movies.length} Filmen` : `${movies.length} ${movies.length === 1 ? "Film" : "Filme"} im Regal`;
+    : active ? `${shown.length} von ${pool.length} Titeln` : `${pool.length} ${pool.length === 1 ? "Titel" : "Titel"} im Regal`;
   $("#exportCsv").hidden = $("#exportJson").hidden = !(downloads && movies.length);
 
   const isEmpty = loaded && movies.length === 0;
@@ -442,7 +487,7 @@ function render() {
     <button class="card" data-id="${esc(m.id)}">
       ${caseHtml(m)}
       <span class="t">${esc(m.title)}</span>
-      <span class="y">${esc(m.year || "")}${list(m.genres).length ? " · " + esc(list(m.genres).slice(0, 2).join(", ")) : ""}</span>
+      <span class="y">${esc([m.year, list(m.genres).slice(0, 2).join(", ")].filter(Boolean).join(" · "))}</span>
     </button>`).join("")
     : loaded ? `<p class="hint">Keine Filme passen zu diesen Filtern.</p>` : "";
 }
@@ -456,7 +501,7 @@ let qTimer;
 $("#q").addEventListener("input", (e) => { clearTimeout(qTimer); qTimer = setTimeout(() => setFilter({ q: e.target.value.trim() }), 150); });
 $("#letters").addEventListener("click", (e) => { const b = e.target.closest("button[data-l]"); if (b && !b.disabled) setFilter({ letter: b.dataset.l }); });
 for (const k of ["sort", "genre", "year", "format"]) $("#" + k).addEventListener("change", (e) => setFilter({ [k]: e.target.value }));
-$("#reset").addEventListener("click", () => { $("#q").value = ""; setFilter({ q: "", letter: "", sort: "title", genre: "", year: "", format: "" }); });
+$("#reset").addEventListener("click", () => { $("#q").value = ""; setFilter({ q: "", letter: "", sort: "title", genre: "", year: "", format: "", cat: "" }); });
 $("#grid").addEventListener("click", (e) => { const c = e.target.closest(".card[data-id]"); if (c) openDetail(c.dataset.id); });
 for (const d of document.querySelectorAll("dialog")) d.addEventListener("click", (e) => { if (e.target.closest("[data-close]")) d.close(); });
 
@@ -779,6 +824,7 @@ function openDetail(id) {
       <button class="btn" data-act="edit">✏️ Bearbeiten</button>
       <button class="btn" data-act="cover">🖼️ Cover ändern</button>
       ${m.photo ? `<button class="btn" data-act="photo">📷 Foto der Rückseite</button>` : ""}
+      ${m.cover ? `<button class="btn" data-act="img-del" data-which="cover">✕ Cover löschen</button>` : ""}
       <button class="btn danger" data-act="delete">🗑️ Löschen</button>
     </div>` : ""}
     <div id="extra"></div>`;
@@ -797,7 +843,15 @@ function onDetailClick(e, m) {
   }
   const act = e.target.closest("[data-act]")?.dataset.act;
   const extra = $("#extra");
-  if (act === "photo") extra.innerHTML = `<img class="photo-full" src="${blobUrl(m.photo)}" alt="Foto der Rückseite">`;
+  if (act === "photo") extra.innerHTML = `<img class="photo-full" src="${blobUrl(m.photo)}" alt="Foto der Rückseite">
+    <div class="actions" style="margin-top:8px"><button class="btn danger" data-act="img-del" data-which="photo">✕ Dieses Foto löschen</button></div>`;
+  if (act === "img-del") {
+    const which = e.target.closest("[data-which]").dataset.which;
+    const label = which === "cover" ? "das Cover" : "das Foto der Rückseite";
+    extra.innerHTML = `<p class="notice warn">Nur ${label} löschen? Der Film bleibt im Regal.</p>
+      <div class="actions"><button class="btn danger" data-act="img-del-yes" data-which="${which}">Ja, Bild löschen</button><button class="btn" data-act="cancel">Abbrechen</button></div>`;
+  }
+  if (act === "img-del-yes") deleteImage(m, e.target.closest("[data-which]").dataset.which);
   if (act === "delete") {
     extra.innerHTML = `<p class="notice warn">„${esc(m.title)}“ und die Fotos dazu endgültig löschen?</p>
       <div class="actions"><button class="btn danger" data-act="delete-yes">Ja, löschen</button><button class="btn" data-act="cancel">Abbrechen</button></div>`;
@@ -806,6 +860,17 @@ function onDetailClick(e, m) {
   if (act === "delete-yes") deleteMovie(m);
   if (act === "edit") showEdit(m);
   if (act === "cover") showCover(m);
+}
+
+// Nur ein Bild entfernen (Cover oder Foto der Rückseite), der Film bleibt erhalten
+async function deleteImage(m, which) {
+  const old = m[which];
+  try {
+    await db.doc("movies/" + m.id).update({ [which]: "" });
+    if (old && !movies.some((x) => x.id !== m.id && (x.photo === old || x.cover === old))) assets.delete(old).catch(() => {});
+    $("#extra").innerHTML = "";
+    openDetail(m.id);
+  } catch { $("#extra").innerHTML = `<p class="notice warn">Löschen fehlgeschlagen. Bitte noch einmal versuchen.</p>`; }
 }
 
 async function deleteMovie(m) {
@@ -833,6 +898,9 @@ function showEdit(m) {
           ${["", "FSK 0", "FSK 6", "FSK 12", "FSK 16", "FSK 18"].map((v) => `<option value="${v}" ${v === (m.fsk || "") ? "selected" : ""}>${v || "–"}</option>`).join("")}
         </select></label>
       </div>
+      <label class="field"><span>Bereich</span><select name="category" id="ed-category">
+        ${[["", "automatisch (" + (CATS.find(([k]) => k === categoryOf({ ...m, category: "" }))?.[1] || "") + ")"], ["film", "Film"], ["serie", "Serie"], ["musik", "Musik"]].map(([v, l]) => `<option value="${v}" ${v === (m.category || "") ? "selected" : ""}>${l}</option>`).join("")}
+      </select></label>
       ${f("genres", "Genres (mit Komma getrennt)", list(m.genres).join(", "))}
       ${f("actors", "Darsteller (mit Komma getrennt)", list(m.actors).join(", "))}
       ${f("directors", "Regie (mit Komma getrennt)", list(m.directors).join(", "))}
@@ -849,7 +917,7 @@ function showEdit(m) {
     const patch = {
       title: d.title.trim(), original_title: d.original_title.trim(), year: intOrNull(d.year), runtime: intOrNull(d.runtime),
       media_format: d.media_format, fsk: d.fsk, genres: split(d.genres), actors: split(d.actors), directors: split(d.directors),
-      studio: d.studio.trim(), overview: d.overview.trim(), notes: d.notes.trim(),
+      studio: d.studio.trim(), overview: d.overview.trim(), notes: d.notes.trim(), category: d.category,
     };
     try {
       await db.doc("movies/" + m.id).update(patch);
@@ -884,6 +952,58 @@ function showCover(m) {
     openDetail(m.id);
   });
 }
+
+// ---------- Statistik ----------
+function barList(entries, opts = {}) {
+  if (!entries.length) return `<p class="hint">Keine Angaben.</p>`;
+  const max = Math.max(...entries.map(([, n]) => n));
+  return `<div class="bars">${entries.map(([label, n]) => {
+    const lab = opts.filter ? `<button class="lab" data-sf="${opts.filter}" data-sv="${esc(label)}">${esc(label)}</button>` : `<span class="lab">${esc(label)}</span>`;
+    return `${lab}<span class="track" title="${esc(label)}: ${n}"><span class="bar" style="width:${Math.max(2, (n / max) * 100)}%"></span><span class="val">${n}</span></span>`;
+  }).join("")}</div>`;
+}
+function countBy(items, keyFn) {
+  const c = new Map();
+  for (const m of items) for (const k of [].concat(keyFn(m)).filter(Boolean)) c.set(k, (c.get(k) || 0) + 1);
+  return [...c.entries()];
+}
+function renderStats() {
+  const all = movies;
+  const runtime = all.reduce((s, m) => s + (m.runtime || 0), 0);
+  const withRuntime = all.filter((m) => m.runtime).length;
+  const byCat = Object.fromEntries(CATS.slice(1).map(([k]) => [k, all.filter((m) => m._cat === k).length]));
+  const tiles = [
+    [all.length, "Titel insgesamt"], [byCat.film, "Filme"], [byCat.serie, "Serien"], [byCat.musik, "Musik"],
+    [Math.round(runtime / 60), `Stunden Laufzeit${withRuntime < all.length ? "*" : ""}`],
+  ];
+  const films = all.filter((m) => m._cat === "film");
+  const genres = countBy(films, (m) => list(m.genres)).sort((a, b) => b[1] - a[1]);
+  const decades = countBy(all, (m) => m.year ? `${Math.floor(m.year / 10) * 10}er` : "").sort((a, b) => a[0].localeCompare(b[0]));
+  const formats = ["DVD", "Blu-ray", "4K UHD"].map((f) => [f, all.filter((m) => m.media_format === f).length]).filter(([, n]) => n);
+  const fsk = ["FSK 0", "FSK 6", "FSK 12", "FSK 16", "FSK 18"].map((f) => [f, all.filter((m) => m.fsk === f).length]).filter(([, n]) => n);
+  const people = (key) => countBy(films, (m) => list(m[key])).filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1] || fold(a[0]).localeCompare(fold(b[0]))).slice(0, 12);
+  $("#statsBody").innerHTML = `
+    <div class="tiles">${tiles.map(([n, l]) => `<div class="tile"><b>${n}</b><span>${l}</span></div>`).join("")}</div>
+    <div class="stat-grid">
+      <section class="stat-sec"><h3>Genres (Filme)</h3>${barList(genres, { filter: "genre" })}</section>
+      <section class="stat-sec"><h3>Jahrzehnte</h3>${barList(decades)}</section>
+      <section class="stat-sec"><h3>Häufigste Schauspieler</h3>${barList(people("actors"), { filter: "q" })}</section>
+      <section class="stat-sec"><h3>Häufigste Regie</h3>${barList(people("directors"), { filter: "q" })}</section>
+      <section class="stat-sec"><h3>Format</h3>${barList(formats, { filter: "format" })}</section>
+      <section class="stat-sec"><h3>Altersfreigabe</h3>${barList(fsk)}</section>
+    </div>
+    <p class="hint">Schauspieler und Regie: nur Spielfilme, ab 2 Filmen. Ein Klick auf einen Namen, ein Genre oder ein Format zeigt die passenden Titel.${withRuntime < all.length ? ` * Laufzeit nur von ${withRuntime} der ${all.length} Titel bekannt.` : ""}</p>`;
+}
+$("#statsBtn").addEventListener("click", () => { renderStats(); $("#statsDlg").showModal(); });
+$("#statsBody").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-sf]");
+  if (!b) return;
+  const k = b.dataset.sf, v = b.dataset.sv;
+  $("#statsDlg").close();
+  if (k === "q") { $("#q").value = v; setFilter({ q: v, cat: "", letter: "", genre: "", year: "", format: "" }); }
+  else setFilter({ [k]: v, cat: k === "genre" ? "film" : "", q: "", letter: "" });
+  $("#q").scrollIntoView({ block: "nearest" });
+});
 
 // ---------- Export ----------
 async function offer(filename, data) {
@@ -947,7 +1067,7 @@ render();
   db.collection("movies").onSnapshot((snap) => {
     movies = snap.docs.map((d) => {
       const m = { id: d.id, ...d.data() };
-      m._st = sortTitle(m.title); m._letter = letterOf(m.title);
+      m._st = sortTitle(m.title); m._letter = letterOf(m.title); m._cat = categoryOf(m);
       return m;
     });
     loaded = true;
