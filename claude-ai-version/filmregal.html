@@ -50,7 +50,10 @@ header.top {
   position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
   background: var(--surface); border-bottom: 1px solid var(--line);
 }
-.top .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-block: 12px; }
+.top .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding-block: 10px; }
+.top .brand { flex: 1 1 0; min-width: 0; }
+#addBtn { flex: none; }
+.top .search { flex: 1 1 100%; }
 .brand { font: 800 1.7rem/1 var(--font-display); letter-spacing: .02em; text-transform: uppercase; margin: 0; }
 .brand small { display: block; font: 500 .72rem/1.2 var(--font-body); letter-spacing: .08em; color: var(--muted); }
 .search { flex: 1 1 240px; min-width: 0; }
@@ -65,7 +68,13 @@ input[type=search], .field input, .field select, .field textarea, .cockpit selec
 .icon-btn { border: 0; background: none; font-size: 1.3rem; line-height: 1; padding: 6px 8px; color: var(--muted); }
 
 .cockpit { background: var(--surface-2); border-bottom: 1px solid var(--line); }
-.cockpit .wrap { display: grid; gap: 10px; padding-block: 12px; }
+.cockpit .wrap { display: grid; gap: 10px; padding-block: 8px; }
+.cockpit-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .85rem; }
+.btn.small { padding: 4px 10px; font-size: .8rem; border-radius: 7px; }
+.filter-panel { display: grid; gap: 10px; padding-bottom: 6px; }
+#filterToggle .chev { display: inline-block; }
+#filterToggle[aria-expanded=true] .chev { transform: rotate(180deg); }
+.badge-count { display: inline-grid; place-items: center; min-width: 1.3em; padding: 0 5px; border-radius: 999px; background: var(--accent); color: var(--accent-fg); font-size: .75rem; font-weight: 700; }
 .letters { display: flex; flex-wrap: wrap; gap: 4px; }
 .letters button {
   min-width: 2.1rem; min-height: 2.1rem; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--line);
@@ -77,9 +86,9 @@ input[type=search], .field input, .field select, .field textarea, .cockpit selec
 .controls label { display: grid; gap: 2px; flex: 1 1 160px; min-width: 0; font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .controls select { text-transform: none; letter-spacing: 0; font-size: .95rem; color: var(--fg); background: var(--surface); }
 .meta-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; color: var(--muted); font-size: .85rem; }
-.meta-row .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.meta-row.tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: flex-start; }
 .zoom { display: inline-flex; }
-.zoom .btn { border-radius: 0; padding: 4px 12px; font-weight: 700; line-height: 1.2; }
+.zoom .btn { border-radius: 0; padding: 3px 10px; font-weight: 700; line-height: 1.2; }
 .zoom .btn:first-child { border-radius: 8px 0 0 8px; }
 .zoom .btn:last-child { border-radius: 0 8px 8px 0; }
 .zoom .btn + .btn { margin-left: -1px; }
@@ -202,7 +211,9 @@ button.chip:hover { border-color: var(--accent); }
   .detail { grid-template-columns: 1fr; }
   .detail .case { width: 60%; margin-inline: auto; }
   .pair { grid-template-columns: 1fr; }
-  .brand { font-size: 1.4rem; }
+  .brand { font-size: 1.3rem; }
+  .brand small { font-size: .62rem; }
+  #addBtn { padding: 7px 11px; font-size: .9rem; }
   .band { font-size: .62rem; letter-spacing: .1em; }
 }
 @media (prefers-reduced-motion: reduce) { .case { transition: none; } .spin { animation-duration: 2.5s; } }
@@ -211,37 +222,40 @@ button.chip:hover { border-color: var(--accent); }
 <header class="top">
   <div class="wrap">
     <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD</small></h1>
-    <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
     <button id="addBtn" class="btn primary">＋ Filme per Foto</button>
+    <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
   </div>
 </header>
 
 <section class="cockpit" aria-label="Filtercockpit">
   <div class="wrap">
-    <nav id="letters" class="letters" aria-label="Anfangsbuchstabe"></nav>
-    <div class="controls">
-      <label>Sortierung
-        <select id="sort">
-          <option value="title">Titel A → Z</option>
-          <option value="title_desc">Titel Z → A</option>
-          <option value="year_desc">Datum absteigend (neueste zuerst)</option>
-          <option value="year_asc">Datum aufsteigend (älteste zuerst)</option>
-          <option value="added_desc">Zuletzt hinzugefügt</option>
-          <option value="added_asc">Zuerst hinzugefügt</option>
-        </select>
-      </label>
-      <label>Genre <select id="genre"></select></label>
-      <label>Jahr <select id="year"></select></label>
-      <label>Format <select id="format"></select></label>
-      <button id="reset" class="btn">Filter zurücksetzen</button>
-    </div>
-    <div class="meta-row">
+    <div class="cockpit-bar">
+      <button id="filterToggle" class="btn small" aria-expanded="false" aria-controls="filterPanel">☰ Filter &amp; Sortierung <span id="filterBadge" class="badge-count" hidden></span> <span class="chev" aria-hidden="true">▾</span></button>
       <span id="count">Sammlung wird geladen …</span>
-      <span class="tools">
-        <span class="zoom" role="group" aria-label="Schriftgröße"><button class="btn" data-zoom="1">A</button><button class="btn" data-zoom="1.15" style="font-size:1.1em">A</button><button class="btn" data-zoom="1.3" style="font-size:1.25em">A</button></span>
-        <button id="exportCsv" class="btn" hidden>Als Excel-Liste (CSV) sichern</button>
-        <button id="exportJson" class="btn" hidden>Komplett-Backup (JSON)</button>
-      </span>
+    </div>
+    <div id="filterPanel" class="filter-panel" hidden>
+      <nav id="letters" class="letters" aria-label="Anfangsbuchstabe"></nav>
+      <div class="controls">
+        <label>Sortierung
+          <select id="sort">
+            <option value="title">Titel A → Z</option>
+            <option value="title_desc">Titel Z → A</option>
+            <option value="year_desc">Datum absteigend (neueste zuerst)</option>
+            <option value="year_asc">Datum aufsteigend (älteste zuerst)</option>
+            <option value="added_desc">Zuletzt hinzugefügt</option>
+            <option value="added_asc">Zuerst hinzugefügt</option>
+          </select>
+        </label>
+        <label>Genre <select id="genre"></select></label>
+        <label>Jahr <select id="year"></select></label>
+        <label>Format <select id="format"></select></label>
+        <button id="reset" class="btn">Filter zurücksetzen</button>
+      </div>
+      <div class="meta-row tools">
+        <span class="zoom" role="group" aria-label="Schriftgröße"><button class="btn small" data-zoom="1">A</button><button class="btn small" data-zoom="1.15" style="font-size:.95rem">A</button><button class="btn small" data-zoom="1.3" style="font-size:1.1rem">A</button></span>
+        <button id="exportCsv" class="btn small" hidden>⤓ Excel-Liste</button>
+        <button id="exportJson" class="btn small" hidden>⤓ Backup</button>
+      </div>
     </div>
   </div>
 </section>
@@ -307,7 +321,7 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 5</span></p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 6</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
@@ -411,6 +425,9 @@ function render() {
 
   const shown = filtered();
   const active = F.q || F.letter || F.genre || F.year || F.format;
+  const nFilters = [F.letter, F.genre, F.year, F.format, F.sort !== "title" ? F.sort : ""].filter(Boolean).length;
+  $("#filterBadge").hidden = !nFilters;
+  $("#filterBadge").textContent = nFilters;
   $("#count").textContent = !loaded ? "Sammlung wird geladen …"
     : active ? `${shown.length} von ${movies.length} Filmen` : `${movies.length} ${movies.length === 1 ? "Film" : "Filme"} im Regal`;
   $("#exportCsv").hidden = $("#exportJson").hidden = !(downloads && movies.length);
@@ -886,7 +903,18 @@ $("#exportJson").addEventListener("click", () => {
 });
 
 // ---------- Start ----------
-try { Object.assign(F, JSON.parse(localStorage.getItem("filmregal-filter") || "{}")); } catch {}
+// Beim Start immer alle Filme zeigen: nur die Sortierung wird gemerkt, keine Filter
+try { const saved = JSON.parse(localStorage.getItem("filmregal-filter") || "{}"); if (SORTS[saved.sort]) F.sort = saved.sort; } catch {}
+// Filtercockpit auf- und zuklappen (standardmäßig zu, Zustand wird pro Gerät gemerkt)
+function setPanel(open) {
+  $("#filterPanel").hidden = !open;
+  $("#filterToggle").setAttribute("aria-expanded", String(open));
+  try { localStorage.setItem("filmregal-panel", open ? "1" : "0"); } catch {}
+}
+$("#filterToggle").addEventListener("click", () => setPanel($("#filterPanel").hidden));
+let panelOpen = false;
+try { panelOpen = localStorage.getItem("filmregal-panel") === "1"; } catch {}
+setPanel(panelOpen);
 function setZoom(z) {
   document.documentElement.style.setProperty("--zoom", z);
   for (const b of document.querySelectorAll("[data-zoom]")) b.setAttribute("aria-pressed", String(b.dataset.zoom === z));
