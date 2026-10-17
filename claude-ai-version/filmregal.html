@@ -240,7 +240,7 @@ button.chip:hover { border-color: var(--accent); }
 
 <header class="top">
   <div class="wrap">
-    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD</small></h1>
+    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 9</small></h1>
     <button id="addBtn" class="btn primary">＋ Filme per Foto</button>
     <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
   </div>
@@ -328,7 +328,7 @@ button.chip:hover { border-color: var(--accent); }
         <div class="pick"><label class="btn primary">📷 Kamera<input id="frontCam" class="vh" type="file" accept="image/*" capture="environment"></label><label class="btn">🖼️ Aus Fotos wählen<input id="frontInput" class="vh" type="file" accept="image/*"></label></div>
       </div>
     </div>
-    <p id="noImages" class="notice warn" hidden>claude.ai hat gemeldet, dass Claude in dieser Ansicht keine Fotos lesen darf. Öffne die Seite in Safari bzw. in der Claude-App, oder gib den Titel ein.</p>
+    <p id="noImages" class="notice warn" hidden>claude.ai hat gemeldet, dass Claude in dieser Ansicht keine Fotos lesen darf. Schick die Fotos einfach im Chat an Claude, dann werden die Filme dort eingetragen.</p>
     <div class="pair">
       <label class="field"><span>Format</span>
         <select id="addFormat">
@@ -342,7 +342,7 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 8</span></p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 9</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
@@ -644,6 +644,7 @@ async function runJob(job, li) {
     const back = job.back ? (job.backSmall = await shrink(job.back, 1600)) : null;
     const front = job.front ? (job.frontSmall = await shrink(job.front, 1000)) : null;
     const images = [back, front].filter(Boolean);
+    if (!sample) throw { code: "images_unavailable", message: "In dieser Ansicht kann Claude keine Fotos lesen." };
     const raw = await sample.json(prompt(job.hint, !!back, !!front), {
       modelTier: "default", ...(images.length ? { images } : {}), ...(job.retry ? { cache: false } : {}),
     });
@@ -778,6 +779,7 @@ async function runMulti(file, box, format) {
   try {
     const small = await shrink(file, 2000);
     box.innerHTML = head(`<span class="spin"></span><span style="flex:1">Claude sucht alle Filme auf dem Foto … Das kann eine Minute dauern.</span>`);
+    if (!sample) throw { code: "images_unavailable", message: "In dieser Ansicht kann Claude keine Fotos lesen." };
     const raw = await sample.json(multiPrompt(), { modelTier: "default", images: [small] });
     const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.filme) ? raw.filme : [];
     const seen = new Set();
@@ -1103,7 +1105,8 @@ render();
     $("#addBtn").disabled = true;
     return;
   }
-  if (!assets || !sample) $("#addBtn").hidden = true;   // nur Besitzer:innen fügen Filme hinzu
+  if (!assets) $("#addBtn").hidden = true;   // nur Besitzer:innen fügen Filme hinzu
+  if (!sample) imagesBlocked = true;
   applyImageSupport();
   try { if (localStorage.getItem("filmregal-mode") === "multi") setMode("multi"); } catch {}
   db.collection("movies").onSnapshot((snap) => {
