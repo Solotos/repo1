@@ -164,6 +164,8 @@ dialog {
   border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--fg);
 }
 dialog::backdrop { background: rgb(8 12 18 / .6); }
+dialog.swiping { transition: none; }
+dialog.snap { transition: transform .2s ease, opacity .2s ease; }
 .dlg-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px 0; }
 .dlg-head h2 { margin: 0; font: 800 1.4rem/1.1 var(--font-display); text-transform: uppercase; letter-spacing: .02em; }
 .dlg-body { padding: 14px 18px 20px; display: grid; gap: 14px; }
@@ -340,7 +342,7 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 7</span></p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 8</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
@@ -504,6 +506,46 @@ for (const k of ["sort", "genre", "year", "format"]) $("#" + k).addEventListener
 $("#reset").addEventListener("click", () => { $("#q").value = ""; setFilter({ q: "", letter: "", sort: "title", genre: "", year: "", format: "", cat: "" }); });
 $("#grid").addEventListener("click", (e) => { const c = e.target.closest(".card[data-id]"); if (c) openDetail(c.dataset.id); });
 for (const d of document.querySelectorAll("dialog")) d.addEventListener("click", (e) => { if (e.target.closest("[data-close]")) d.close(); });
+
+// Daumen-Wisch nach links schließt das offene Fenster
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+function scrollsSideways(el, d) {
+  for (; el && el !== d; el = el.parentElement) if (el.scrollWidth > el.clientWidth + 2 && /(auto|scroll)/.test(getComputedStyle(el).overflowX)) return true;
+  return false;
+}
+for (const d of document.querySelectorAll("dialog")) {
+  let sx = 0, sy = 0, dx = 0, mode = "";
+  const reset = () => { d.classList.remove("swiping"); d.style.transform = ""; d.style.opacity = ""; };
+  d.addEventListener("touchstart", (e) => {
+    mode = "";
+    if (e.touches.length !== 1 || e.target.closest("input, textarea, select, [contenteditable]") || scrollsSideways(e.target, d)) { mode = "off"; return; }
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0;
+  }, { passive: true });
+  d.addEventListener("touchmove", (e) => {
+    if (mode === "off") return;
+    const x = e.touches[0].clientX - sx, y = e.touches[0].clientY - sy;
+    if (!mode) {
+      if (Math.abs(x) < 10 && Math.abs(y) < 10) return;
+      mode = x < 0 && Math.abs(x) > Math.abs(y) * 1.2 ? "swipe" : "off";
+      if (mode === "swipe") d.classList.remove("snap"), d.classList.add("swiping");
+    }
+    if (mode !== "swipe") return;
+    e.preventDefault();
+    dx = Math.min(0, x);
+    if (!reduceMotion.matches) { d.style.transform = `translateX(${dx}px)`; d.style.opacity = String(Math.max(.3, 1 + dx / 400)); }
+  }, { passive: false });
+  const end = () => {
+    if (mode !== "swipe") return;
+    mode = "";
+    d.classList.remove("swiping");
+    if (dx < -80) { reset(); d.close(); return; }
+    d.classList.add("snap"); d.style.transform = ""; d.style.opacity = "";
+    setTimeout(() => d.classList.remove("snap"), 220);
+  };
+  d.addEventListener("touchend", end);
+  d.addEventListener("touchcancel", () => { dx = 0; end(); });
+  d.addEventListener("close", reset);
+}
 
 function banner(text, cls = "") { $("#banner").innerHTML = text ? `<p class="notice ${cls}">${text}</p>` : ""; }
 
