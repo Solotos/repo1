@@ -240,7 +240,6 @@ button.chip:hover { border-color: var(--accent); }
   .detail .case { width: 60%; margin-inline: auto; }
   .pair { grid-template-columns: 1fr; }
   .brand { font-size: min(1.9rem, 8.5vw); }
-  .lbl-long { display: none; }
   .brand small { font-size: .62rem; }
   #addBtn { padding: 7px 11px; font-size: .9rem; }
   .band { font-size: .62rem; letter-spacing: .1em; }
@@ -250,8 +249,8 @@ button.chip:hover { border-color: var(--accent); }
 
 <header class="top">
   <div class="wrap">
-    <h1 class="brand"><span class="bt">Mein Filmregal</span><small><span class="bs">DVD · Blu-ray · 4K UHD · Version 20</span></small></h1>
-    <button id="addBtn" class="btn primary" aria-label="Filme per Foto hinzufügen">＋ <span class="lbl-long">Filme per </span>Foto</button>
+    <h1 class="brand"><span class="bt">Mein Filmregal</span><small><span class="bs">DVD · Blu-ray · 4K UHD · Version 21</span></small></h1>
+    <button id="addBtn" class="btn primary" aria-label="Film hinzufügen">＋ Film</button>
   </div>
 </header>
 
@@ -296,10 +295,8 @@ button.chip:hover { border-color: var(--accent); }
   <div id="empty" class="empty" hidden>
     <h2>Dein Regal ist noch leer</h2>
     <ol>
-      <li>Tippe auf <strong>＋ Filme per Foto</strong>.</li>
-      <li>Fotografiere die <strong>Rückseite</strong> der DVD oder Blu-ray. Mit einem zweiten Foto der <strong>Vorderseite</strong> bekommt der Film sein Cover.</li>
-      <li>Claude liest das Cover, erkennt den Film und trägt Titel, Jahr, Schauspieler, Genre und Inhalt ein.</li>
-      <li>Viele Filme auf einmal: Wähle <strong>„Viele Filme auf einem Foto“</strong> und fotografiere ein ganzes Regalbrett oder einen Stapel.</li>
+      <li>Tippe oben rechts auf <strong>＋ Film</strong> und trag Titel, Jahr und Format ein.</li>
+      <li>Oder schick Claude im Chat Fotos deiner Regale – Claude trägt die Filme dann für dich ein.</li>
     </ol>
     <p class="hint">So sieht das Regal danach aus (Beispiele, nicht gespeichert):</p>
   </div>
@@ -307,55 +304,8 @@ button.chip:hover { border-color: var(--accent); }
 </main>
 
 <dialog id="addDlg" aria-labelledby="addTitle">
-  <div class="dlg-head"><h2 id="addTitle">Filme hinzufügen</h2><button class="icon-btn" data-close aria-label="Schließen">✕</button></div>
-  <div class="dlg-body">
-    <div class="modes" role="tablist" aria-label="Wie möchtest du Filme hinzufügen?">
-      <button role="tab" id="tabSingle" aria-selected="true" data-mode="single">Eine Hülle pro Foto</button>
-      <button role="tab" id="tabMulti" aria-selected="false" data-mode="multi">Viele Filme auf einem Foto</button>
-    </div>
-    <div id="modeMulti" hidden>
-      <div class="drop" id="dropMulti">
-        <strong>📚 Regal oder Stapel fotografieren</strong>
-        <span>Hüllenrücken im Regal, ein Stapel oder mehrere Hüllen nebeneinander</span>
-        <div class="pick"><label class="btn primary">📷 Kamera<input id="multiCam" class="vh" type="file" accept="image/*" capture="environment"></label><label class="btn">🖼️ Aus Fotos wählen<input id="multiInput" class="vh" type="file" accept="image/*" multiple></label></div>
-      </div>
-      <p class="hint">Am besten klappt es mit 10–15 Filmen pro Foto: nah genug, dass die Schrift auf den Rücken lesbar ist. Vor dem Speichern siehst du die Liste und hakst ab, was stimmt.</p>
-      <div class="field"><span>Format aller Filme auf dem Foto</span>
-        <select id="multiFormat"><option value="">automatisch erkennen</option><option>DVD</option><option>Blu-ray</option><option>4K UHD</option></select>
-      </div>
-      <div id="review"></div>
-    </div>
-    <div id="modeSingle">
-    <div id="photoArea" class="pair">
-      <div class="drop" id="dropBack">
-        <strong>Rückseite</strong>
-        <span>Pflicht · aus Fotos auch mehrere auf einmal</span>
-        <div class="pick"><label class="btn primary">📷 Kamera<input id="backCam" class="vh" type="file" accept="image/*" capture="environment"></label><label class="btn">🖼️ Aus Fotos wählen<input id="backInput" class="vh" type="file" accept="image/*" multiple></label></div>
-      </div>
-      <div class="drop" id="dropFront">
-        <strong>Vorderseite (optional)</strong>
-        <span id="frontState">wird zum Cover des nächsten Films</span>
-        <div class="pick"><label class="btn primary">📷 Kamera<input id="frontCam" class="vh" type="file" accept="image/*" capture="environment"></label><label class="btn">🖼️ Aus Fotos wählen<input id="frontInput" class="vh" type="file" accept="image/*"></label></div>
-      </div>
-    </div>
-    <p id="noImages" class="notice warn" hidden>claude.ai hat gemeldet, dass Claude in dieser Ansicht keine Fotos lesen darf. Schick die Fotos einfach im Chat an Claude, dann werden die Filme dort eingetragen.</p>
-    <div class="pair">
-      <label class="field"><span>Format</span>
-        <select id="addFormat">
-          <option value="">automatisch erkennen</option><option>DVD</option><option>Blu-ray</option><option>4K UHD</option>
-        </select>
-      </label>
-      <label class="field"><span>Hinweis (optional)</span>
-        <input id="hint" placeholder="z. B. Titel, falls das Foto unscharf ist">
-      </label>
-    </div>
-    <div class="or">
-      <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
-    </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 20</span></p>
-    </div>
-    <ul id="queue" class="queue"></ul>
-  </div>
+  <div class="dlg-head"><h2 id="addTitle">Film hinzufügen</h2><button class="icon-btn" data-close aria-label="Schließen">✕</button></div>
+  <div class="dlg-body" id="addBody"></div>
 </dialog>
 
 <dialog id="statsDlg" aria-labelledby="statsTitle">
@@ -382,7 +332,7 @@ const ARTICLES = ["der ", "die ", "das ", "the ", "a ", "an ", "ein ", "eine ", 
 const F = { q: "", letter: "", sort: "title", genre: "", year: "", format: "", cat: "" };
 let movies = [], loaded = false;
 // Foto-Knöpfe sind immer sichtbar; nur ein echter Fehler beim Lesen blendet den Hinweis ein.
-let db = null, sample = null, assets = null, downloads = null, imagesBlocked = false;
+let db = null, assets = null, downloads = null;
 
 const EXAMPLES = [
   { title: "Der Pate", year: 1972, media_format: "Blu-ray", fsk: "FSK 16" },
@@ -593,275 +543,36 @@ async function storeImage(blob) {
   catch (e) { console.warn("Bild nicht gespeichert", e); return ""; }
 }
 
-// ---------- Erkennung mit Claude ----------
-function prompt(hint, hasPhoto, hasFront) {
-  return [
-    "Du katalogisierst eine private DVD- und Blu-ray-Sammlung.",
-    hasPhoto ? `Bild 1 ist ein Foto der Rückseite einer Filmhülle${hasFront ? ", Bild 2 die Vorderseite" : ""}. Lies den Text auf dem Cover (Titel, Darsteller, Studio, FSK-Logo, Laufzeit, Format-Logos wie DVD / Blu-ray / 4K Ultra HD) und bestimme den Film.`
-      : "Bestimme den Film anhand des Hinweises.",
-    hint ? `Hinweis des Sammlers: ${hint}` : "",
-    "Ergänze die Metadaten aus deinem Wissen. Erfinde nichts: Wenn du den Film nicht sicher bestimmen kannst, setze confidence auf \"niedrig\" und erkläre in hinweis kurz, was fehlt.",
-    `Genres nur aus dieser Liste: ${GENRES.join(", ")}.`,
-    "Antworte nur mit einem JSON-Objekt in genau dieser Form:",
-    '{"title": "deutscher Titel wie auf der Hülle", "original_title": "", "year": 1999, "genres": ["Action"], "actors": ["max. 8 Hauptdarsteller"], "directors": [""], "runtime": 120, "overview": "2-3 Sätze Inhalt auf Deutsch, ohne Spoiler", "media_format": "DVD | Blu-ray | 4K UHD | leer", "studio": "", "fsk": "FSK 12 oder leer", "confidence": "hoch | mittel | niedrig", "hinweis": ""}',
-    "Unbekannte Texte sind \"\", unbekannte Zahlen null, unbekannte Listen [].",
-  ].filter(Boolean).join("\n");
-}
-
-const ERRORS = {
-  not_granted: "Du hast der Seite nicht erlaubt, Claude zu benutzen. Lade die Seite neu, dann wirst du erneut gefragt.",
-  sampling_disabled: "Claude ist für dein Konto in dieser Ansicht nicht verfügbar.",
-  rate_limited: "Dein Claude-Nutzungslimit ist gerade erreicht. Versuch es später noch einmal.",
-  session_expired: "Du bist abgemeldet. Melde dich bei claude.ai neu an und lade die Seite neu.",
-  image_rejected: "Das Foto konnte nicht gelesen werden. Versuch ein anderes Foto (JPG oder PNG).",
-  images_unavailable: "In dieser Ansicht kann Claude keine Fotos lesen. Gib den Titel als Hinweis ein.",
-  refused: "Claude hat dieses Foto nicht bearbeitet. Versuch es mit einem anderen Foto oder dem Titel.",
-  invalid_json: "Claude hat unverständlich geantwortet. Bitte noch einmal versuchen.",
-  empty_completion: "Claude hat nichts erkannt. Versuch ein schärferes Foto oder gib den Titel ein.",
-};
-const errText = (e) => ERRORS[e?.code] || "Die Erkennung ist fehlgeschlagen. Bitte noch einmal versuchen.";
-
-function normalize(r, fallbackFormat) {
-  const fmt = ["DVD", "Blu-ray", "4K UHD"].includes(r?.media_format) ? r.media_format : "";
-  return {
-    title: String(r?.title || "").trim(),
-    original_title: String(r?.original_title || "").trim(),
-    year: intOrNull(r?.year),
-    genres: list(r?.genres).filter((g) => GENRES.includes(g)),
-    actors: list(r?.actors).slice(0, 10),
-    directors: list(r?.directors),
-    runtime: intOrNull(r?.runtime),
-    overview: String(r?.overview || "").trim(),
-    media_format: fallbackFormat || fmt,
-    studio: String(r?.studio || "").trim(),
-    fsk: /^FSK (0|6|12|16|18)$/.test(String(r?.fsk || "").trim()) ? String(r.fsk).trim() : "",
-    confidence: ["hoch", "mittel", "niedrig"].includes(r?.confidence) ? r.confidence : "mittel",
-    hinweis: String(r?.hinweis || "").trim(),
-  };
-}
-
+// ---------- Film von Hand hinzufügen ----------
 function findDuplicate(m) {
   return movies.find((x) => fold(x.title) === fold(m.title) && (x.year || null) === (m.year || null) && (x.media_format || "") === (m.media_format || ""));
 }
 
-async function saveMovie(m, photoId, coverId) {
-  const { confidence, hinweis, ...data } = m;
-  const ref = await db.collection("movies").add({ ...data, photo: photoId, cover: coverId, notes: "", created_at: new Date().toISOString() });
-  return ref.id;
-}
-
-// Warteschlange: Fotos nacheinander verarbeiten
-let chain = Promise.resolve();
-let pendingFront = null;
-
-function enqueue(job) {
-  const li = document.createElement("li");
-  li.innerHTML = `<span class="thumb">${job.back ? "" : "🔎"}</span><div class="msg">Wartet …</div><span class="spin"></span>`;
-  if (job.back) { const img = document.createElement("img"); img.className = "thumb"; img.alt = ""; img.src = URL.createObjectURL(job.back); li.firstChild.replaceWith(img); }
-  $("#queue").prepend(li);
-  chain = chain.then(() => runJob(job, li)).catch(() => {});
-}
-
-async function runJob(job, li) {
-  const msg = li.querySelector(".msg");
-  const done = (cls, html) => { li.querySelector(".spin")?.remove(); msg.className = "msg " + cls; msg.innerHTML = html; };
-  msg.textContent = "Claude liest das Cover und erkennt den Film …";
-  try {
-    const back = job.back ? (job.backSmall = await shrink(job.back, 1600)) : null;
-    const front = job.front ? (job.frontSmall = await shrink(job.front, 1000)) : null;
-    const images = [back, front].filter(Boolean);
-    if (!sample) throw { code: "images_unavailable", message: "In dieser Ansicht kann Claude keine Fotos lesen." };
-    const raw = await sample.json(prompt(job.hint, !!back, !!front), {
-      modelTier: "default", ...(images.length ? { images } : {}), ...(job.retry ? { cache: false } : {}),
-    });
-    const m = normalize(raw, job.format);
-    if (!m.title) return done("err", "✕ Kein Film erkannt. Versuch ein schärferes Foto oder gib den Titel ein.");
-    job.result = m;
-    const dup = findDuplicate(m);
-    if (dup && !job.allowDuplicate) {
-      done("warn", `„${esc(m.title)}“ (${esc(m.year || "?")}) steht schon im Regal.<div class="actions"><button class="btn" data-dup>Trotzdem speichern</button> <button class="btn" data-open="${esc(dup.id)}">Vorhandenen ansehen</button></div>`);
-      msg.querySelector("[data-dup]").onclick = () => {
-        li.innerHTML = `<span class="thumb">⏳</span><div class="msg">Wird gespeichert …</div><span class="spin"></span>`;
-        chain = chain.then(() => persist(job, li));
-      };
-      bindOpen(msg);
+// Formular beim Schließen entfernen, sonst gibt es seine Feld-IDs doppelt, wenn danach „Bearbeiten“ geöffnet wird
+$("#addDlg").addEventListener("close", () => { $("#addBody").innerHTML = ""; });
+$("#addBtn").addEventListener("click", () => {
+  $("#addBody").innerHTML = movieForm({ media_format: "Blu-ray" }, "addForm", "＋ Film speichern");
+  $("#addDlg").showModal();
+  $("#ed-title").focus();
+  let warned = null;
+  $("#addForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const data = readForm(e.target);
+    if (!data.title) { $("#addForm .msg").textContent = "Bitte mindestens den Titel eintragen."; return; }
+    const dup = findDuplicate(data);
+    if (dup && warned !== dup.id) {
+      warned = dup.id;
+      $("#addForm .msg").textContent = `„${dup.title}“ steht schon so im Regal. Nochmal auf Speichern tippen, um ein zweites Exemplar anzulegen.`;
       return;
     }
-    await persist(job, li);
-  } catch (e) {
-    if (e?.code === "images_unavailable") { imagesBlocked = true; applyImageSupport(); }
-    done("err", "✕ " + esc(errText(e)));
-  }
-}
-
-async function persist(job, li) {
-  const msg = li.querySelector(".msg");
-  const done = (cls, html) => { li.querySelector(".spin")?.remove(); msg.className = "msg " + cls; msg.innerHTML = html; };
-  try {
-    const [photoId, coverId] = await Promise.all([
-      job.backSmall ? storeImage(job.backSmall) : "",
-      job.frontSmall ? storeImage(job.frontSmall) : "",
-    ]);
-    const m = job.result;
-    const id = await saveMovie(m, photoId, coverId);
-    const unsure = m.confidence === "niedrig";
-    done(unsure ? "warn" : "ok",
-      `${unsure ? "⚠️ Unsicher erkannt" : "✓ Gespeichert"}: <strong>${esc(m.title)}</strong> (${esc(m.year || "?")})` +
-      (unsure && m.hinweis ? `<br><small>${esc(m.hinweis)}</small>` : "") +
-      `<div class="actions"><button class="btn" data-open="${esc(id)}">${unsure ? "Prüfen & korrigieren" : "Ansehen"}</button></div>`);
-    bindOpen(msg);
-  } catch (e) {
-    done("err", e?.code === "quota_exceeded" ? "✕ Der Speicher ist voll. Lösche Filme, die du nicht mehr brauchst." : "✕ Speichern fehlgeschlagen. Bitte noch einmal versuchen.");
-  }
-}
-
-function bindOpen(el) {
-  for (const b of el.querySelectorAll("[data-open]")) b.onclick = () => { $("#addDlg").close(); openDetail(b.dataset.open); };
-}
-
-// Upload-Dialog
-$("#addBtn").addEventListener("click", () => $("#addDlg").showModal());
-function takeBacks(files) {
-  const hint = $("#hint").value.trim(), format = $("#addFormat").value;
-  files.forEach((f, i) => enqueue({ back: f, front: i === 0 ? pendingFront : null, hint: files.length === 1 ? hint : "", format }));
-  pendingFront = null; $("#frontState").textContent = "wird zum Cover des nächsten Films"; $("#hint").value = "";
-}
-for (const id of ["#backInput", "#backCam"]) $(id).addEventListener("change", (e) => { takeBacks([...e.target.files]); e.target.value = ""; });
-for (const id of ["#frontInput", "#frontCam"]) $(id).addEventListener("change", (e) => {
-  pendingFront = e.target.files[0] || null; e.target.value = "";
-  $("#frontState").textContent = pendingFront ? "✓ Vorderseite bereit – jetzt die Rückseite" : "wird zum Cover des nächsten Films";
-});
-for (const [zone, handler] of [["#dropBack", (fs) => takeBacks(fs)], ["#dropFront", (fs) => { pendingFront = fs[0]; $("#frontState").textContent = "✓ Vorderseite bereit – jetzt die Rückseite"; }]]) {
-  const el = $(zone);
-  el.addEventListener("dragover", (e) => { e.preventDefault(); el.classList.add("over"); });
-  el.addEventListener("dragleave", () => el.classList.remove("over"));
-  el.addEventListener("drop", (e) => {
-    e.preventDefault(); el.classList.remove("over");
-    const fs = [...e.dataTransfer.files].filter((f) => f.type.startsWith("image/"));
-    if (fs.length) handler(fs);
-  });
-}
-$("#byTitle").addEventListener("click", () => {
-  const hint = $("#hint").value.trim();
-  if (!hint) { $("#hint").focus(); $("#hint").placeholder = "Bitte zuerst einen Titel eingeben"; return; }
-  enqueue({ back: null, front: pendingFront, hint, format: $("#addFormat").value });
-  pendingFront = null; $("#hint").value = "";
-});
-function applyImageSupport() {
-  $("#noImages").hidden = !imagesBlocked;
-}
-
-// ---------- Viele Filme auf einem Foto ----------
-function setMode(mode) {
-  $("#tabSingle").setAttribute("aria-selected", String(mode === "single"));
-  $("#tabMulti").setAttribute("aria-selected", String(mode === "multi"));
-  $("#modeSingle").hidden = mode !== "single";
-  $("#modeMulti").hidden = mode !== "multi";
-  try { localStorage.setItem("filmregal-mode", mode); } catch {}
-}
-document.querySelector(".modes").addEventListener("click", (e) => { const b = e.target.closest("[data-mode]"); if (b) setMode(b.dataset.mode); });
-
-function multiPrompt() {
-  return [
-    "Du katalogisierst eine private DVD- und Blu-ray-Sammlung.",
-    "Auf dem Foto sind MEHRERE Filmhüllen zu sehen: zum Beispiel Hüllenrücken in einem Regal, ein Stapel oder nebeneinander liegende Cover.",
-    "Erkenne JEDEN einzelnen Film, in Lesereihenfolge (links nach rechts, oben nach unten). Zähle keinen Film doppelt und lass keinen aus.",
-    "Kannst du einen Titel nicht sicher lesen, nimm ihn trotzdem auf: confidence \"niedrig\" und in hinweis, was du lesen konntest.",
-    "Das Format erkennst du an Farbe und Logo: Blu-ray hat einen blauen Rand bzw. das Blu-ray-Logo, 4K UHD ist schwarz mit 4K-Ultra-HD-Logo, DVD meist schwarz oder transparent mit DVD-Logo. Unsicher: leer lassen.",
-    "Ergänze die Metadaten aus deinem Wissen, erfinde nichts.",
-    `Genres nur aus dieser Liste: ${GENRES.join(", ")}.`,
-    "Antworte nur mit JSON in genau dieser Form (overview höchstens 1 Satz, höchstens 4 Darsteller):",
-    '{"filme": [{"title": "", "original_title": "", "year": 1999, "genres": [""], "actors": [""], "directors": [""], "runtime": 120, "overview": "", "media_format": "DVD | Blu-ray | 4K UHD | leer", "studio": "", "fsk": "FSK 12 oder leer", "confidence": "hoch | mittel | niedrig", "hinweis": ""}]}',
-    "Unbekannte Texte sind \"\", unbekannte Zahlen null, unbekannte Listen [].",
-  ].join("\n");
-}
-
-let multiChain = Promise.resolve(), reviewSeq = 0;
-function enqueueMulti(files) {
-  for (const file of files) {
-    const box = document.createElement("div");
-    box.className = "review";
-    $("#review").prepend(box);
-    const format = $("#multiFormat").value;
-    multiChain = multiChain.then(() => runMulti(file, box, format)).catch(() => {});
-  }
-}
-for (const id of ["#multiInput", "#multiCam"]) $(id).addEventListener("change", (e) => { enqueueMulti([...e.target.files]); e.target.value = ""; });
-{
-  const el = $("#dropMulti");
-  el.addEventListener("dragover", (e) => { e.preventDefault(); el.classList.add("over"); });
-  el.addEventListener("dragleave", () => el.classList.remove("over"));
-  el.addEventListener("drop", (e) => {
-    e.preventDefault(); el.classList.remove("over");
-    const fs = [...e.dataTransfer.files].filter((f) => f.type.startsWith("image/"));
-    if (fs.length) enqueueMulti(fs);
-  });
-}
-
-async function runMulti(file, box, format) {
-  const thumb = URL.createObjectURL(file);
-  const head = (inner) => `<div class="review-head"><img src="${thumb}" alt="Dein Foto">${inner}</div>`;
-  box.innerHTML = head(`<span class="spin"></span><span style="flex:1">Wartet …</span>`);
-  try {
-    const small = await shrink(file, 2000);
-    box.innerHTML = head(`<span class="spin"></span><span style="flex:1">Claude sucht alle Filme auf dem Foto … Das kann eine Minute dauern.</span>`);
-    if (!sample) throw { code: "images_unavailable", message: "In dieser Ansicht kann Claude keine Fotos lesen." };
-    const raw = await sample.json(multiPrompt(), { modelTier: "default", images: [small] });
-    const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.filme) ? raw.filme : [];
-    const seen = new Set();
-    const items = arr.map((r) => normalize(r, format)).filter((m) => {
-      const key = fold(m.title) + "|" + (m.year || "");
-      if (!m.title || seen.has(key)) return false;
-      seen.add(key); return true;
-    });
-    if (!items.length) {
-      box.innerHTML = head(`<span class="err" style="flex:1">✕ Auf diesem Foto wurde kein Film erkannt. Geh näher heran, damit die Schrift lesbar ist.</span>`);
-      return;
-    }
-    renderReview(box, items, small, head);
-  } catch (e) {
-    if (e?.code === "images_unavailable") { imagesBlocked = true; applyImageSupport(); }
-    box.innerHTML = head(`<span class="err" style="flex:1">✕ ${esc(errText(e))}</span>`);
-  }
-}
-
-function renderReview(box, items, photoBlob, head) {
-  const seq = ++reviewSeq;
-  for (const m of items) m._dup = !!findDuplicate(m);
-  box.innerHTML = head(`<span style="flex:1"><strong>${items.length} ${items.length === 1 ? "Film" : "Filme"} erkannt</strong><br><span class="hint">Entferne den Haken bei allem, was nicht stimmt.</span></span>`) +
-    `<ul class="review-list">${items.map((m, i) => {
-      const badge = m._dup ? `<span class="badge warn">schon im Regal</span>`
-        : m.confidence === "niedrig" ? `<span class="badge warn" title="${esc(m.hinweis)}">unsicher</span>` : "";
-      const sub = [m.year, m.media_format, list(m.genres).slice(0, 2).join(", ")].filter(Boolean).join(" · ");
-      return `<li><input type="checkbox" id="rv${seq}-${i}" data-i="${i}" ${m._dup || m.confidence === "niedrig" ? "" : "checked"}>
-        <label for="rv${seq}-${i}"><div class="rt">${esc(m.title)}</div><div class="rs">${esc([sub, m.confidence === "niedrig" ? m.hinweis : ""].filter(Boolean).join(" · "))}</div></label>${badge}</li>`;
-    }).join("")}</ul>
-    <div class="review-foot"><button class="btn primary" data-save></button><button class="btn" data-discard>Verwerfen</button><span class="hint" data-msg></span></div>`;
-  const saveBtn = box.querySelector("[data-save]");
-  const checked = () => [...box.querySelectorAll("input[type=checkbox]:checked")].map((c) => items[+c.dataset.i]);
-  const updateBtn = () => { const n = checked().length; saveBtn.textContent = `${n} ${n === 1 ? "Film" : "Filme"} speichern`; saveBtn.disabled = !n; };
-  box.querySelector(".review-list").addEventListener("change", updateBtn);
-  updateBtn();
-  box.querySelector("[data-discard]").onclick = () => box.remove();
-  saveBtn.onclick = async () => {
-    const chosen = checked();
-    saveBtn.disabled = true;
-    box.querySelector("[data-discard]").hidden = true;
-    for (const c of box.querySelectorAll("input[type=checkbox]")) c.disabled = true;
-    const msg = box.querySelector("[data-msg]");
-    msg.textContent = "Wird gespeichert …";
-    const photoId = await storeImage(photoBlob);
-    let saved = 0;
     try {
-      for (const m of chosen) { await saveMovie(m, photoId, ""); saved++; msg.textContent = `${saved} von ${chosen.length} gespeichert …`; }
-      msg.className = "ok"; msg.textContent = `✓ ${saved} ${saved === 1 ? "Film" : "Filme"} gespeichert`;
-      saveBtn.hidden = true;
-    } catch (e) {
-      msg.className = "err";
-      msg.textContent = e?.code === "quota_exceeded" ? `✕ Speicher voll nach ${saved} Filmen.` : `✕ Fehler nach ${saved} von ${chosen.length} Filmen. Bitte die übrigen noch einmal versuchen.`;
-    }
+      await db.collection("movies").add({ ...data, cover: "", photo: "", created_at: new Date().toISOString() });
+      $("#addDlg").close();
+      banner(`„${esc(data.title)}“ wurde hinzugefügt.`);
+      setTimeout(() => banner(""), 4000);
+    } catch { $("#addForm .msg").textContent = "Speichern fehlgeschlagen. Bitte noch einmal versuchen."; }
   };
-}
+});
 
 // ---------- Details, Bearbeiten, Löschen ----------
 let currentId = null;
@@ -954,10 +665,10 @@ async function deleteMovie(m) {
   } catch { $("#extra").innerHTML = `<p class="notice warn">Löschen fehlgeschlagen. Bitte noch einmal versuchen.</p>`; }
 }
 
-function showEdit(m) {
-  const f = (key, label, val = m[key]) => `<label class="field"><span>${label}</span><input name="${key}" id="ed-${key}" value="${esc(val ?? "")}"></label>`;
-  $("#extra").innerHTML = `
-    <form class="form" id="editForm">
+function movieForm(m, id, submitLabel) {
+  const f = (key, label, val = m[key]) => `<label class="field"><span>${label}</span><input name="${key}" id="ed-${key}" value="${esc(val ?? "")}"${key === "year" || key === "runtime" ? ' inputmode="numeric"' : ""}></label>`;
+  return `
+    <form class="form" id="${id}">
       <div class="pair">${f("title", "Titel")}${f("original_title", "Originaltitel")}</div>
       <div class="pair">${f("year", "Jahr")}${f("runtime", "Laufzeit (Min.)")}</div>
       <div class="pair">
@@ -977,22 +688,30 @@ function showEdit(m) {
       ${f("studio", "Studio")}
       <label class="field"><span>Inhalt</span><textarea name="overview" id="ed-overview">${esc(m.overview)}</textarea></label>
       ${f("notes", "Notizen (z. B. verliehen an …)")}
-      <div class="actions"><button class="btn primary">Speichern</button><span id="editMsg" class="hint"></span></div>
+      <div class="actions"><button class="btn primary">${submitLabel}</button><span class="hint msg"></span></div>
     </form>`;
+}
+
+function readForm(form) {
+  const d = Object.fromEntries(new FormData(form));
+  const split = (s) => s.split(",").map((x) => x.trim()).filter(Boolean);
+  return {
+    title: d.title.trim(), original_title: d.original_title.trim(), year: intOrNull(d.year), runtime: intOrNull(d.runtime),
+    media_format: d.media_format, fsk: d.fsk, genres: split(d.genres), actors: split(d.actors), directors: split(d.directors),
+    studio: d.studio.trim(), overview: d.overview.trim(), notes: d.notes.trim(), category: d.category,
+  };
+}
+
+function showEdit(m) {
+  $("#extra").innerHTML = movieForm(m, "editForm", "Speichern");
   $("#editForm").onsubmit = async (e) => {
     e.preventDefault();
-    const d = Object.fromEntries(new FormData(e.target));
-    if (!d.title.trim()) { $("#editMsg").textContent = "Der Titel darf nicht leer sein."; return; }
-    const split = (s) => s.split(",").map((x) => x.trim()).filter(Boolean);
-    const patch = {
-      title: d.title.trim(), original_title: d.original_title.trim(), year: intOrNull(d.year), runtime: intOrNull(d.runtime),
-      media_format: d.media_format, fsk: d.fsk, genres: split(d.genres), actors: split(d.actors), directors: split(d.directors),
-      studio: d.studio.trim(), overview: d.overview.trim(), notes: d.notes.trim(), category: d.category,
-    };
+    const patch = readForm(e.target);
+    if (!patch.title) { $("#editForm .msg").textContent = "Der Titel darf nicht leer sein."; return; }
     try {
       await db.doc("movies/" + m.id).update(patch);
       openDetail(m.id);
-    } catch { $("#editMsg").textContent = "Speichern fehlgeschlagen. Bitte noch einmal versuchen."; }
+    } catch { $("#editForm .msg").textContent = "Speichern fehlgeschlagen. Bitte noch einmal versuchen."; }
   };
 }
 
@@ -1140,7 +859,7 @@ render();
     $("#addBtn").disabled = true;
     return;
   }
-  [db, sample, assets, downloads] = await Promise.all(["db", "sample", "assets", "downloads"].map((n) => window.claude.use(n).catch(() => null)));
+  [db, assets, downloads] = await Promise.all(["db", "assets", "downloads"].map((n) => window.claude.use(n).catch(() => null)));
   if (!db) {
     loaded = true; render();
     banner("Die Sammlung ist nur sichtbar, wenn du bei claude.ai angemeldet bist.", "warn");
@@ -1148,9 +867,6 @@ render();
     return;
   }
   if (!assets) $("#addBtn").hidden = true;   // nur Besitzer:innen fügen Filme hinzu
-  if (!sample) imagesBlocked = true;
-  applyImageSupport();
-  try { if (localStorage.getItem("filmregal-mode") === "multi") setMode("multi"); } catch {}
   db.collection("movies").onSnapshot((snap) => {
     movies = snap.docs.map((d) => {
       const m = { id: d.id, ...d.data() };
