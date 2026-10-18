@@ -117,7 +117,7 @@ input[type=search], .field input, .field select, .field textarea, .cockpit selec
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 1.4rem 1.1rem; padding-block: 20px 40px; }
 .card { display: grid; gap: 8px; align-content: start; text-align: left; background: none; border: 0; padding: 0; }
-.card .t { font-weight: 600; font-size: 1.25rem; line-height: 1.2; }
+.card .t { font-weight: 600; font-size: .85rem; line-height: 1.25; }
 .card .y { color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
 @media (hover: hover) { .card:hover .case { transform: translateY(-3px); } }   /* nur mit Maus, sonst bleibt die Kachel auf dem Handy hängen */
 .card.example { opacity: .75; cursor: default; }
@@ -143,7 +143,7 @@ input[type=search], .field input, .field select, .field textarea, .cockpit selec
   height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; padding: 12px;
   color: #fff; overflow: hidden;
 }
-.poster-gen .pt { font: 800 clamp(.8rem, 13cqi, 1.9rem)/.95 var(--font-display); text-transform: uppercase; letter-spacing: .01em; overflow-wrap: break-word; hyphens: auto; text-wrap: balance; }
+.poster-gen .pt { font: 800 clamp(1rem, 16.25cqi, 2.4rem)/.95 var(--font-display); text-transform: uppercase; letter-spacing: .01em; overflow-wrap: normal; hyphens: manual; text-wrap: balance; }
 .poster-gen .py { font: 600 .85rem/1 var(--font-display); letter-spacing: .2em; opacity: .8; }
 .fsk {
   position: absolute; right: 6px; top: 6px; width: 1.7rem; height: 1.7rem; border-radius: 4px;
@@ -243,7 +243,7 @@ button.chip:hover { border-color: var(--accent); }
 
 <header class="top">
   <div class="wrap">
-    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 13</small></h1>
+    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 14</small></h1>
     <button id="addBtn" class="btn primary" aria-label="Filme per Foto hinzufügen">＋ <span class="lbl-long">Filme per </span>Foto</button>
     <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
   </div>
@@ -345,7 +345,7 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 13</span></p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 14</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
@@ -498,7 +498,20 @@ function render() {
       <span class="y">${esc([m.year, list(m.genres).slice(0, 2).join(", ")].filter(Boolean).join(" · "))}</span>
     </button>`).join("")
     : loaded ? `<p class="hint">Keine Filme passen zu diesen Filtern.</p>` : "";
+  fitTitles();
 }
+
+// Coverschrift groß lassen, nur verkleinern, wenn ein Wort nicht in die Zeile passt
+function fitTitles() {
+  for (const el of document.querySelectorAll("#grid .pt")) {
+    el.style.fontSize = "";
+    const w = el.clientWidth, sw = el.scrollWidth;
+    if (sw > w + 1) el.style.fontSize = Math.max(10, Math.floor(parseFloat(getComputedStyle(el).fontSize) * w / sw)) + "px";
+  }
+}
+document.fonts?.ready.then(fitTitles);
+let fitTimer;
+addEventListener("resize", () => { clearTimeout(fitTimer); fitTimer = setTimeout(fitTitles, 150); });
 
 function setFilter(patch) {
   Object.assign(F, patch);
@@ -1089,6 +1102,7 @@ function setZoom(z) {
   document.documentElement.style.setProperty("--zoom", z);
   for (const b of document.querySelectorAll("[data-zoom]")) b.setAttribute("aria-pressed", String(b.dataset.zoom === z));
   try { localStorage.setItem("filmregal-zoom", z); } catch {}
+  fitTitles();
 }
 document.querySelector(".zoom").addEventListener("click", (e) => { const b = e.target.closest("[data-zoom]"); if (b) setZoom(b.dataset.zoom); });
 let savedZoom = "1";
