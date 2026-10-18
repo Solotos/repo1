@@ -54,7 +54,6 @@ header.top {
 .top .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding-block: 10px; }
 .top .brand { flex: 1 1 0; min-width: 0; }
 #addBtn { flex: none; }
-.top .search { flex: 1 1 100%; }
 .brand { font: 800 1.7rem/1 var(--font-display); letter-spacing: .02em; text-transform: uppercase; margin: 0; }
 .brand small { display: block; font: 500 .72rem/1.2 var(--font-body); letter-spacing: .08em; color: var(--muted); }
 .search { flex: 1 1 240px; min-width: 0; }
@@ -244,9 +243,8 @@ button.chip:hover { border-color: var(--accent); }
 
 <header class="top">
   <div class="wrap">
-    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 16</small></h1>
+    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 17</small></h1>
     <button id="addBtn" class="btn primary" aria-label="Filme per Foto hinzufügen">＋ <span class="lbl-long">Filme per </span>Foto</button>
-    <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
   </div>
 </header>
 
@@ -258,6 +256,7 @@ button.chip:hover { border-color: var(--accent); }
       <span id="count">Sammlung wird geladen …</span>
     </div>
     <div id="filterPanel" class="filter-panel" hidden>
+      <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
       <nav id="letters" class="letters" aria-label="Anfangsbuchstabe"></nav>
       <div class="controls">
         <label>Sortierung
@@ -346,7 +345,7 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 16</span></p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 17</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
@@ -479,7 +478,7 @@ function render() {
 
   const shown = filtered();
   const active = F.q || F.letter || F.genre || F.year || F.format;
-  const nFilters = [F.letter, F.genre, F.year, F.format, F.sort !== "title" ? F.sort : ""].filter(Boolean).length;
+  const nFilters = [F.q, F.letter, F.genre, F.year, F.format, F.sort !== "title" ? F.sort : ""].filter(Boolean).length;
   $("#filterBadge").hidden = !nFilters;
   $("#filterBadge").textContent = nFilters;
   $("#count").textContent = !loaded ? "Sammlung wird geladen …"
