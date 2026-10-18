@@ -118,7 +118,7 @@ input[type=search], .field input, .field select, .field textarea, .cockpit selec
 .card { display: grid; gap: 8px; align-content: start; text-align: left; background: none; border: 0; padding: 0; }
 .card .t { font-weight: 600; line-height: 1.25; }
 .card .y { color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
-.card:hover .case { transform: translateY(-3px); }
+@media (hover: hover) { .card:hover .case { transform: translateY(-3px); } }   /* nur mit Maus, sonst bleibt die Kachel auf dem Handy hängen */
 .card.example { opacity: .75; cursor: default; }
 .card.example:hover .case { transform: none; }
 
@@ -242,7 +242,7 @@ button.chip:hover { border-color: var(--accent); }
 
 <header class="top">
   <div class="wrap">
-    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 11</small></h1>
+    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 12</small></h1>
     <button id="addBtn" class="btn primary" aria-label="Filme per Foto hinzufügen">＋ <span class="lbl-long">Filme per </span>Foto</button>
     <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
   </div>
@@ -344,7 +344,7 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 11</span></p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 12</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
