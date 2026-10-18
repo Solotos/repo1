@@ -69,7 +69,11 @@ input[type=search], .field input, .field select, .field textarea, .cockpit selec
 
 .cockpit { background: var(--surface-2); border-bottom: 1px solid var(--line); }
 .cockpit .wrap { display: grid; gap: 10px; padding-block: 8px; }
-.cockpit-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .85rem; }
+.cockpit-bar { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: .85rem; }
+#filterToggle { flex: none; }
+#count { flex: 1 1 0; min-width: 0; display: grid; justify-items: center; text-align: center; line-height: 1.15; }   /* füllt den Platz neben dem Filter-Knopf */
+#count b { white-space: nowrap; font: 800 1.35rem/1 var(--font-display); color: var(--fg); font-variant-numeric: tabular-nums; }
+#count small { font-size: .75rem; white-space: nowrap; }
 .cats { display: flex; gap: 4px; padding: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
 .cats button { flex: 1 1 0; min-width: 0; border: 0; background: none; border-radius: 7px; padding: 6px 4px; font-weight: 600; font-size: .9rem; color: var(--muted); white-space: nowrap; }
 .cats button[aria-pressed=true] { background: var(--accent); color: var(--accent-fg); }
@@ -243,7 +247,7 @@ button.chip:hover { border-color: var(--accent); }
 
 <header class="top">
   <div class="wrap">
-    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 17</small></h1>
+    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 18</small></h1>
     <button id="addBtn" class="btn primary" aria-label="Filme per Foto hinzufügen">＋ <span class="lbl-long">Filme per </span>Foto</button>
   </div>
 </header>
@@ -253,7 +257,7 @@ button.chip:hover { border-color: var(--accent); }
     <nav id="cats" class="cats" aria-label="Bereich"></nav>
     <div class="cockpit-bar">
       <button id="filterToggle" class="btn small" aria-expanded="false" aria-controls="filterPanel">☰ Filter &amp; Sortierung <span id="filterBadge" class="badge-count" hidden></span> <span class="chev" aria-hidden="true">▾</span></button>
-      <span id="count">Sammlung wird geladen …</span>
+      <span id="count" aria-live="polite"><small>Sammlung wird geladen …</small></span>
     </div>
     <div id="filterPanel" class="filter-panel" hidden>
       <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
@@ -345,7 +349,7 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 17</span></p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 18</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
@@ -481,8 +485,8 @@ function render() {
   const nFilters = [F.q, F.letter, F.genre, F.year, F.format, F.sort !== "title" ? F.sort : ""].filter(Boolean).length;
   $("#filterBadge").hidden = !nFilters;
   $("#filterBadge").textContent = nFilters;
-  $("#count").textContent = !loaded ? "Sammlung wird geladen …"
-    : active ? `${shown.length} von ${pool.length} Titeln` : `${pool.length} ${pool.length === 1 ? "Titel" : "Titel"} im Regal`;
+  $("#count").innerHTML = !loaded ? `<small>Sammlung wird geladen …</small>`
+    : active ? `<b>${shown.length}</b><small>von ${pool.length}</small>` : `<b>${pool.length}</b><small>Titel im Regal</small>`;
   $("#exportCsv").hidden = $("#exportJson").hidden = !(downloads && movies.length);
 
   const isEmpty = loaded && movies.length === 0;
