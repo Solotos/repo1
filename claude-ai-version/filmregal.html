@@ -56,8 +56,8 @@ header.top {
 #addBtn { flex: none; }
 .brand { font: 800 1.7rem/1 var(--font-display); letter-spacing: .02em; text-transform: uppercase; margin: 0; }
 .brand small { display: block; font: 500 .72rem/1.2 var(--font-body); letter-spacing: .08em; color: var(--muted); }
-/* Titelzeilen und Unterzeile auf gleiche Breite gesperrt (fitBrand) */
-.brand .bw { display: block; width: max-content; white-space: nowrap; }
+/* Titel einzeilig, so groß, dass er genau so breit ist wie die Unterzeile (fitBrand) */
+.brand .bt { display: inline-block; white-space: nowrap; }
 .brand .bs { display: inline-block; white-space: nowrap; }
 .search { flex: 1 1 240px; min-width: 0; }
 input[type=search], .field input, .field select, .field textarea, .cockpit select {
@@ -250,7 +250,7 @@ button.chip:hover { border-color: var(--accent); }
 
 <header class="top">
   <div class="wrap">
-    <h1 class="brand"><span class="bw">Mein</span> <span class="bw">Filmregal</span><small><span class="bs">DVD · Blu-ray · 4K UHD · Version 19</span></small></h1>
+    <h1 class="brand"><span class="bt">Mein Filmregal</span><small><span class="bs">DVD · Blu-ray · 4K UHD · Version 20</span></small></h1>
     <button id="addBtn" class="btn primary" aria-label="Filme per Foto hinzufügen">＋ <span class="lbl-long">Filme per </span>Foto</button>
   </div>
 </header>
@@ -352,7 +352,7 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 19</span></p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 20</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
@@ -1105,20 +1105,15 @@ $("#filterToggle").addEventListener("click", () => setPanel($("#filterPanel").hi
 let panelOpen = false;
 try { panelOpen = localStorage.getItem("filmregal-panel") === "1"; } catch {}
 setPanel(panelOpen);
-// „Mein“, „Filmregal“ und die Unterzeile bündig auf dieselbe Breite sperren
+// „Mein Filmregal“ einzeilig und bündig mit der Unterzeile
 function fitBrand() {
-  const els = [...document.querySelectorAll(".brand .bw, .brand .bs")];
-  for (const el of els) { el.style.letterSpacing = ""; el.style.marginRight = ""; }
-  // reine Schriftbreite ohne den Sperrabstand hinter jedem Zeichen
-  const glyphs = els.map((el) => el.getBoundingClientRect().width - el.textContent.length * (parseFloat(getComputedStyle(el).letterSpacing) || 0));
-  const target = Math.min(Math.max(...glyphs), document.querySelector(".brand").clientWidth);
-  els.forEach((el, i) => {
-    const n = el.textContent.length;
-    if (n < 2) return;
-    const ls = (target - glyphs[i]) / (n - 1);
-    el.style.letterSpacing = ls + "px";
-    el.style.marginRight = -ls + "px";
-  });
+  const t = document.querySelector(".brand .bt"), sub = document.querySelector(".brand .bs");
+  t.style.fontSize = "";
+  // reine Schriftbreite der Unterzeile, ohne den Sperrabstand hinter dem letzten Zeichen
+  const target = Math.min(sub.getBoundingClientRect().width - (parseFloat(getComputedStyle(sub).letterSpacing) || 0),
+    document.querySelector(".brand").clientWidth);
+  const w = t.getBoundingClientRect().width - (parseFloat(getComputedStyle(t).letterSpacing) || 0);
+  if (w > 0) t.style.fontSize = parseFloat(getComputedStyle(t).fontSize) * target / w + "px";
 }
 fitBrand();
 document.fonts?.ready.then(fitBrand);
