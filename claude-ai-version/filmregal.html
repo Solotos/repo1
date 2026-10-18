@@ -90,6 +90,7 @@ input[type=search], .field input, .field select, .field textarea, .cockpit selec
 @media (max-width: 600px) { .stat-grid { grid-template-columns: 1fr; } }
 .btn.small { padding: 4px 10px; font-size: .8rem; border-radius: 7px; }
 .filter-panel { display: grid; gap: 10px; padding-bottom: 6px; }
+#filterToggle { padding: 10px 18px; font-size: 1.05rem; font-weight: 600; border-radius: 9px; }
 #filterToggle .chev { display: inline-block; }
 #filterToggle[aria-expanded=true] .chev { transform: rotate(180deg); }
 .badge-count { display: inline-grid; place-items: center; min-width: 1.3em; padding: 0 5px; border-radius: 999px; background: var(--accent); color: var(--accent-fg); font-size: .75rem; font-weight: 700; }
@@ -243,7 +244,7 @@ button.chip:hover { border-color: var(--accent); }
 
 <header class="top">
   <div class="wrap">
-    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 14</small></h1>
+    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 15</small></h1>
     <button id="addBtn" class="btn primary" aria-label="Filme per Foto hinzufügen">＋ <span class="lbl-long">Filme per </span>Foto</button>
     <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
   </div>
@@ -345,7 +346,7 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 14</span></p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 15</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
