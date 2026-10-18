@@ -1,3 +1,4 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Mein Filmregal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,7 +39,7 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 /* Grundgröße per Größen-Schalter (Normal / Groß / Sehr groß); alles in rem skaliert mit */
-html { font-size: calc(17px * var(--zoom, 1)); }
+html { font-size: calc(17px * var(--zoom, 1)); touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; }   /* kein Fingerzoom, kein Doppeltipp-Zoom */
 body { background: var(--bg); color: var(--fg); font: 1rem/1.5 var(--font-body); }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -116,7 +117,7 @@ input[type=search], .field input, .field select, .field textarea, .cockpit selec
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 1.4rem 1.1rem; padding-block: 20px 40px; }
 .card { display: grid; gap: 8px; align-content: start; text-align: left; background: none; border: 0; padding: 0; }
-.card .t { font-weight: 600; line-height: 1.25; }
+.card .t { font-weight: 600; font-size: 1.25rem; line-height: 1.2; }
 .card .y { color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
 @media (hover: hover) { .card:hover .case { transform: translateY(-3px); } }   /* nur mit Maus, sonst bleibt die Kachel auf dem Handy hängen */
 .card.example { opacity: .75; cursor: default; }
@@ -242,7 +243,7 @@ button.chip:hover { border-color: var(--accent); }
 
 <header class="top">
   <div class="wrap">
-    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 12</small></h1>
+    <h1 class="brand">Mein Filmregal<small>DVD · Blu-ray · 4K UHD · Version 13</small></h1>
     <button id="addBtn" class="btn primary" aria-label="Filme per Foto hinzufügen">＋ <span class="lbl-long">Filme per </span>Foto</button>
     <div class="search"><input id="q" type="search" placeholder="Suchen: Titel, Schauspieler, Regie …" autocomplete="off" aria-label="Sammlung durchsuchen"></div>
   </div>
@@ -344,7 +345,7 @@ button.chip:hover { border-color: var(--accent); }
     <div class="or">
       <button id="byTitle" class="btn">Nur mit Titel suchen (ohne Foto)</button>
     </div>
-    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 12</span></p>
+    <p class="hint">Die Erkennung nutzt dein eigenes Claude-Konto. Beim ersten Mal fragt claude.ai, ob die Seite Claude benutzen darf. <span style="opacity:.7">· Version 13</span></p>
     </div>
     <ul id="queue" class="queue"></ul>
   </div>
@@ -362,6 +363,9 @@ button.chip:hover { border-color: var(--accent); }
 
 <script>
 "use strict";
+// iOS Safari ignoriert user-scalable=no – Zwei-Finger-Zoom hier selbst abfangen
+for (const ev of ["gesturestart", "gesturechange"]) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+document.addEventListener("touchmove", (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 const $ = (s) => document.querySelector(s);
 const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 const GENRES = ["Action", "Abenteuer", "Animation", "Biografie", "Dokumentation", "Drama", "Familie", "Fantasy",
